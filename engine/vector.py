@@ -1,7 +1,7 @@
 from itertools import islice
 from math import sqrt
-from typing import Callable, Dict, Iterable, List, Tuple
-from engine.core import IRDocument, IRTerm, IRCollection, IRQuerifier, IRRanker
+from typing import Callable, Dict, Iterable, List
+from engine.core import IRDocument, IRTerm, IRCollection, IRQuerifier, IRRanker, IRS
 from engine.tokenizer import tokenize
 
 
@@ -99,3 +99,9 @@ class VectorIRRanker(IRRanker):
         l = [d for _, d in islice(l, n_index)]
 
         return l
+
+
+class VectorIRS(IRS):
+    ranker = VectorIRRanker()
+    collection = VectorIRCollection()
+    querifier = VectorIRQuerifier()
