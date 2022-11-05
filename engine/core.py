@@ -54,7 +54,7 @@ class IRDocument:
 
 class IRIndexer():
     '''
-    Default Indexer wich cast a `RawDocument` into a `IRDocument` extracting the
+    Default Indexer which cast a `RawDocument` into a `IRDocument` extracting the
     terms (tokens) to index.
     '''
 
@@ -103,7 +103,7 @@ class IRCollection(ABC):
         Method to add more than one document to the collection.
         Separated from the single version to allow optimization.
         
-        Returns an `Iterable` of boolean telling wich documents
+        Returns an `Iterable` of boolean telling which documents
         added successfully.
         '''
         pass
@@ -120,7 +120,7 @@ class IRCollection(ABC):
 
 class IRQuerifier(ABC):
     '''
-    Cast a text natural query into an object thet the `IRCollection`
+    Cast a text natural query into an object that the `IRCollection`
     should understand. 
     '''
     @abstractmethod
@@ -140,7 +140,7 @@ class IRQuerifier(ABC):
 class IRRanker(ABC):
     '''
     Creates a ranking/list to show the document as a search result
-    from a list of this documets with their relevance function.
+    from a list of this documents with their relevance function.
     '''
     @abstractmethod
     def rank(self, docs: Iterable[IRDocument],

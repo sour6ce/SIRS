@@ -9,7 +9,7 @@ def get_cran_text(c_doc: CranfieldDoc) -> str:
     Get what is the text that is supposed to index from the Cranfield
     document.
     '''
-    # In this case besides the text (that includes the title) wher're adding
+    # In this case besides the text (that includes the title) we're adding
     # the authors and the extra data from bibliography
     return c_doc.text+'\n\n'+c_doc.author+'\n\n'+c_doc.bib
 
