@@ -163,7 +163,7 @@ class IRS():
     Main class of the engine, works as a pipeline for main operations
     in the IR system (add documents and)
     '''
-    indexer: IRIndexer
+    indexer: IRIndexer = IRIndexer()
     collection: IRCollection
     querifier: IRQuerifier
     ranker: IRRanker
