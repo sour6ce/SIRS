@@ -1,5 +1,6 @@
+from itertools import islice
 from math import sqrt
-from typing import Dict, Iterable, Tuple
+from typing import Callable, Dict, Iterable, List, Tuple
 from engine.core import IRDocument, IRTerm, IRCollection, IRQuerifier, IRRanker
 from engine.tokenizer import tokenize
 
@@ -57,6 +58,9 @@ class VectorIRCollection(IRCollection):
         n_q = sqrt(sum((x*x for x in q_vec)))  # Query vector distance
         n_d = sqrt(sum((x*x for x in d_vec)))  # Document vector distance
 
+        if abs(n_d) <= 1e-8:
+            return -1
+
         sim = mult/(n_d*n_q)
 
         return sim
@@ -70,3 +74,28 @@ class VectorIRQuerifier(IRQuerifier):
         for s in tokenize(query):
             r[IRTerm(s)] = r.get(IRTerm(s), 0)+1
         return r
+
+
+class VectorIRRanker(IRRanker):
+    def rank(
+            self, docs: Iterable[IRDocument],
+            rel_func: Callable[[IRDocument], float]
+    ) -> List[IRDocument]:
+        docs = list(docs)  # List out of the documents
+
+        # List of the same size with relevance
+        rel = [rel_func(d) for d in docs]
+
+        # Zip both lists into tuples (relevance,document) for sorting
+        l = list(zip(rel, docs))
+        l.sort(reverse=True)
+
+        # Gets the first index where the relevance is zero or less
+        # (first not relevant document)
+        n_index = next((i for i, v in l if v <= .0), len(l))
+
+        # Get only the documents from the sorted tuple list while the
+        # first not relevant document has not been reached
+        l = [d for _, d in islice(l, n_index)]
+
+        return l
