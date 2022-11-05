@@ -1,7 +1,7 @@
 '''Core and abstract functionality of the IR system'''
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, RawDocument, Iterable, NamedTuple, Set
+from typing import Any, Callable, List, Iterable, NamedTuple, Set
 from .tokenizer import tokenize
 
 
