@@ -64,7 +64,7 @@ class IRIndexer():
         '''
         r = IRDocument()
         r.doc = doc
-        r.tokens = tokenize(doc.text)
+        r.tokens = (IRTerm(s) for s in tokenize(doc.text))
         return r
 
     def __call__(self, doc: RawDocument) -> IRDocument:
