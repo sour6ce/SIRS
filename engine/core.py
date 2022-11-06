@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Iterable, NamedTuple, Set
 from .tokenizer import tokenize
 
+# TODO: A big cache system (took 250s to build the system)
 
 class RawDocument(NamedTuple):
     '''
@@ -39,6 +40,12 @@ class IRTerm:
     def __ne__(self, __o: object) -> bool:
         return not (self == __o)
 
+    def __lt__(self, __o: object) -> bool:
+        return self.text < str(__o)
+
+    def __gt__(self, __o: object) -> bool:
+        return self.text > str(__o)
+
 
 class IRDocument:
     '''
@@ -50,6 +57,24 @@ class IRDocument:
 
     def __hash__(self) -> int:
         return hash(self.doc)
+
+    def __str__(self) -> str:
+        return self.doc.title.capitalize()
+
+    def __repr__(self) -> str:
+        return self.doc.title.capitalize()
+
+    def __lt__(self, __o: object) -> bool:
+        if isinstance(__o, IRDocument):
+            return self.doc < __o.doc
+        else:
+            return self.doc < __o
+
+    def __gt__(self, __o: object) -> bool:
+        if isinstance(__o, IRDocument):
+            return self.doc > __o.doc
+        else:
+            return self.doc > __o
 
 
 class IRIndexer():
