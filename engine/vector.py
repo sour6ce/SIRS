@@ -92,7 +92,7 @@ class VectorIRRanker(IRRanker):
 
         # Gets the first index where the relevance is zero or less
         # (first not relevant document)
-        n_index = next((i for i, v in l if v <= .0), len(l))
+        n_index = next((i for i, (r, _) in enumerate(l) if r <= .0), len(l))
 
         # Get only the documents from the sorted tuple list while the
         # first not relevant document has not been reached
