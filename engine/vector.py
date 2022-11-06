@@ -48,7 +48,7 @@ class VectorIRCollection(IRCollection):
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
 
         # Use only the terms in the query
-        ts = (t for t in query.keys())
+        ts = [t for t in query.keys()]
 
         q_vec = [query[t] for t in ts]  # Query related vector
         d_vec = [doc.terms.get(t, 0) for t in ts]  # Document related vector
