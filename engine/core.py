@@ -193,6 +193,12 @@ class IRS():
     querifier: IRQuerifier
     ranker: IRRanker
 
+    def __init__(self) -> None:
+        self.indexer.irs = self
+        self.collection.irs = self
+        self.querifier.irs = self
+        self.ranker.irs = self
+
     def add_document(self, doc: RawDocument) -> bool:
         return self.collection.add_document(self.indexer(doc))
 
