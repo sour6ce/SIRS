@@ -5,11 +5,12 @@ import pandas as pd
 class ICache:
   dirty: bool
   filename: str
-  documents: List[RawDocument]
+  documents: List[IRDocument]
   dataCache: pd.DataFrame
   fullData: pd.DataFrame
   
-  def __init__(self,fileName: str = '', documents: List[RawDocument] = [])->None:
+  def __init__(
+          self, fileName: str = '', documents: List[IRDocument] = []) -> None:
     self.dirty = False
     self.filename = fileName
     self.documents = documents
@@ -23,18 +24,18 @@ class ICache:
     
     
   @abstractmethod 
-  def add_document(self, document: RawDocument)->None:
+  def add_document(self, document: IRDocument) -> None:
     pass
   
   @abstractmethod
-  def add_documents(self, documents: List[RawDocument]) -> None:
+  def add_documents(self, documents: List[IRDocument]) -> None:
     pass
 
   @abstractmethod
   def remove_document(self, documentId: str)->None:
     pass
   
-  def update_document(self, documentId:str, newDocument: RawDocument)->None:
+  def update_document(self, documentId: str, newDocument: IRDocument) -> None:
     self.remove_document(documentId)
     self.add_document(newDocument)
     return
@@ -44,15 +45,16 @@ class ICache:
     pass
   
 class VectorCSVCache(ICache):
-  def __init__(self, fileName: str = '', documents: List[RawDocument] = []) -> None:
+  def __init__(
+          self, fileName: str = '', documents: List[IRDocument] = []) -> None:
     super().__init__(fileName, documents)
     
-  def add_document(self, document: RawDocument) -> None:
+  def add_document(self, document: IRDocument) -> None:
     self.documents.append(document)
     self.dirty = True
     return
   
-  def add_documents(self, documents: List[RawDocument]) -> None:
+  def add_documents(self, documents: List[IRDocument]) -> None:
     self.documents = self.documents + documents
     self.dirty = True
     return
@@ -67,7 +69,7 @@ class VectorCSVCache(ICache):
     selected_columns = [i for i in selected_columns if i in self.fullData.columns]
     to_add_documents = [i for i in self.documents if i.doc_id not in self.dataCache.columns]
     for addingDoc in to_add_documents:
-      terms = tokenize(addingDoc.text)
+      terms = addingDoc.tokens
       dataframeKeywords = self.fullData.index.values
       toAddTerms = [i for i in terms if i not in dataframeKeywords]
       newData = pd.DataFrame([[0 for j in self.fullData.columns] for i in toAddTerms], columns=self.fullData.columns,index=toAddTerms)
