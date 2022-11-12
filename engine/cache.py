@@ -73,7 +73,7 @@ class VectorCSVCache(ICache):
     selected_columns = [i for i in selected_columns if i in self.fullData.columns]
     to_add_documents = [
         i for i in self.documents
-        if i.doc.doc_id not in self.dataCache.columns]
+        if i.doc.doc_id not in self.fullData.columns]
 
     def freq(doc: IRDocument):
       d: Dict[str, int] = dict()
