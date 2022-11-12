@@ -75,12 +75,12 @@ class VectorCSVCache(ICache):
       newData = pd.DataFrame([[0 for j in self.fullData.columns] for i in toAddTerms], columns=self.fullData.columns,index=toAddTerms)
       self.fullData = pd.concat([self.fullData,newData]).sort_index()
       
-      termsOccurences = {i:0 for i in terms}
+      termsOccurrences = {i:0 for i in terms}
       for term in terms:
-        termsOccurences[term] = termsOccurences[term] + 1
+        termsOccurrences[term] = termsOccurrences[term] + 1
         
       dataframeKeywordsAllSorted = self.fullData.index.values
-      self.fullData[addingDoc.doc_id] = [termsOccurences[i] if i in termsOccurences.keys else 0 for i in dataframeKeywordsAllSorted]
+      self.fullData[addingDoc.doc_id] = [termsOccurrences[i] if i in termsOccurrences.keys else 0 for i in dataframeKeywordsAllSorted]
       
     self.dataCache = self.dataCache[[i.doc_id for i in self.documents]]
   
