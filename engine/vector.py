@@ -5,6 +5,7 @@ from typing import Callable, Dict, Iterable, List
 from engine.core import IRDocument, IRCollection, IRQuerifier, IRRanker, IRS
 from engine.tokenizer import tokenize
 from engine.cache import VectorCSVCache
+import numpy as np
 
 
 class VectorIRCollection(IRCollection):
@@ -13,29 +14,28 @@ class VectorIRCollection(IRCollection):
             path.join(path.dirname(__file__), 'vector.cache.csv')
         )
     )
+
     def add_document(self, document: IRDocument) -> bool:
         self.cache.add_document(document)
-        self.cache.recalculateDataCache()
+        self.cache.save()
 
     def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
         self.cache.add_documents(list(documents))
-        self.cache.recalculateDataCache()
+        self.cache.save()
 
     def get_relevance(self, query: Dict[str, int],
                       doc: IRDocument) -> float:
 
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
 
-        # Use only the terms in the query
-        ts = [t for t in query.keys()]
+        d_vec = self.cache.fullData[doc.doc.doc_id]  # Document related vector
+        q_vec = np.array((query.get(word, 0)
+                         for word in d_vec.index))  # Query related vector
 
-        q_vec = [query[t] for t in ts]  # Query related vector
-        d_vec = [doc.terms.get(t, 0) for t in ts]  # Document related vector
+        mult = np.sum(d_vec*q_vec)  # Dot product
 
-        mult = sum((x*y for x, y in zip(q_vec, d_vec)))  # Dot product
-
-        n_q = sqrt(sum((x*x for x in q_vec)))  # Query vector distance
-        n_d = sqrt(sum((x*x for x in d_vec)))  # Document vector distance
+        n_q = sqrt(np.sum(q_vec*q_vec))  # Query vector distance
+        n_d = sqrt(np.sum(d_vec*d_vec))  # Document vector distance
 
         if abs(n_d) <= 1e-8:
             return -1
