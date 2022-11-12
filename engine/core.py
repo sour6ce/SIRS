@@ -19,7 +19,7 @@ class IRDocument:
     Wrapper for a document to allow store a index terms cache and extra
     information.
     '''
-    tokens: Iterable[str]
+    tokens: List[str]
     doc: RawDocument
 
     def __hash__(self) -> int:
@@ -56,7 +56,7 @@ class IRIndexer():
         '''
         r = IRDocument()
         r.doc = doc
-        r.tokens = (tokenize(doc.text))
+        r.tokens = list(tokenize(doc.text))
         return r
 
     def __call__(self, doc: RawDocument) -> IRDocument:
@@ -108,6 +108,12 @@ class IRCollection(ABC):
         query with a given `IRDocument` of the system.
         '''
         pass
+    
+    def __contains__(self, __o: IRDocument | str):
+        if isinstance(__o,str):
+            return __o in self.terms
+        if isinstance(__o,IRDocument):
+            return __o in self.documents
 
 
 class IRQuerifier(ABC):
