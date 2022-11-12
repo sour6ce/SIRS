@@ -23,7 +23,7 @@ class IRDocument:
     doc: RawDocument
 
     def __hash__(self) -> int:
-        return hash(self.doc)
+        return hash(self.doc.doc_id)
 
     def __str__(self) -> str:
         return self.doc.title.capitalize()
@@ -33,15 +33,15 @@ class IRDocument:
 
     def __lt__(self, __o: object) -> bool:
         if isinstance(__o, IRDocument):
-            return self.doc < __o.doc
+            return self.doc.doc_id < __o.doc.doc_id
         else:
-            return self.doc < __o
+            return self.doc.doc_id < __o
 
     def __gt__(self, __o: object) -> bool:
         if isinstance(__o, IRDocument):
-            return self.doc > __o.doc
+            return self.doc.doc_id > __o.doc.doc_id
         else:
-            return self.doc > __o
+            return self.doc.doc_id > __o
 
 
 class IRIndexer():
