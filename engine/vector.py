@@ -16,12 +16,20 @@ class VectorIRCollection(IRCollection):
     )
 
     def add_document(self, document: IRDocument) -> bool:
+        if document.doc.doc_id in self.cache.fullData:
+            return False
         self.cache.add_document(document)
         self.cache.save()
+        return True
 
     def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
-        self.cache.add_documents(list(documents))
+        docs = np.array(list(documents))
+        r = np.array([d.doc.doc_id not in self.cache.fullData for d in docs])
+
+        n_d = list((d for d, new in zip(docs, r) if new))
+        self.cache.add_documents(n_d)
         self.cache.save()
+        return r
 
     def get_relevance(self, query: Dict[str, int],
                       doc: IRDocument) -> float:
