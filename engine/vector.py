@@ -1,46 +1,25 @@
 from itertools import islice
 from math import sqrt
+from os import path
 from typing import Callable, Dict, Iterable, List
 from engine.core import IRDocument, IRCollection, IRQuerifier, IRRanker, IRS
 from engine.tokenizer import tokenize
+from engine.cache import VectorCSVCache
 
 
 class VectorIRCollection(IRCollection):
+    cache: VectorCSVCache = VectorCSVCache(
+        path.abspath(
+            path.join(path.dirname(__file__), 'vector.cache.csv')
+        )
+    )
     def add_document(self, document: IRDocument) -> bool:
-        if document in self.documents:
-            # The document is already in the collection
-            return False
-        for term in document.tokens:
-            # Includes the term in the set of terms in the collection
-            self.terms.add(term)
-
-            # Includes the document in the set of documents in the collection
-            self.documents.add(document)
-
-            # Get a unique term (document as parameter may came with term that
-            # has the same text but it's not the same in the collection). This
-            # allows to change a unique object instance each time the same
-            # string comes as term
-            term = next((t for t in self.terms if t == term), term)
-
-            # The document should store a dictionary with the frequency of
-            # each term
-
-            # Get the dictionary stored of an empty one if not created and
-            # set it
-            document.terms: Dict[str, int] = getattr(document, 'terms', {})
-            # Get the frequency of a term in that document or zero if first
-            # occurrence and increase it in one
-            document.terms[term] = document.terms.get(term, 0) + 1
-
-            # Similar to the two lines above, each term will stores a
-            # dictionary with their frequency in each document.
-            term.documents: Dict[IRDocument, int] = getattr(
-                document, 'documents', {})
-            term.documents[document] = term.documents.get(document, 0)+1
+        self.cache.add_document(document)
+        self.cache.recalculateDataCache()
 
     def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
-        return [self.add_document(d) for d in documents]
+        self.cache.add_documents(list(documents))
+        self.cache.recalculateDataCache()
 
     def get_relevance(self, query: Dict[str, int],
                       doc: IRDocument) -> float:
