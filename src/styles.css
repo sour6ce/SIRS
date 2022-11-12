@@ -1,0 +1,68 @@
+* {
+  font-family: Poppins, sans-serif;
+}
+
+header {
+  background-color: #f5f5f5;
+  padding: 10px 20px 10px 20px;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  position: fixed;
+  z-index: 50;
+  inset: auto 0;
+  top: 0;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem
+}
+
+nav ul li a {
+  text-decoration: none;
+  color: var(--bs-primary);
+  font-size: 1.125rem;
+}
+
+nav ul li a:hover {
+  text-decoration: underline;
+  color: var(--bs-primary);
+}
+
+nav ul li a:visited {
+  text-decoration: underline;
+  color: var(--bs-purple);
+}
+
+h1{
+  margin: 0;
+}
+
+main{
+  margin-top: 6rem;
+}
+
+input{
+  width: 100%;
+}
+
+.finder{
+  padding: 0 20px 0 20px;
+}
+
+.content{
+  padding: 0 20px 0 20px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+  margin-top: 30px;
+}

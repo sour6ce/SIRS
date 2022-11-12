@@ -4,12 +4,14 @@ from os import path
 from typing import List
 from typing_extensions import Self
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from engine.core import IRDocument
 from engine.cranfield import to_rawdocument
 from engine.vector import VectorIRS
 from datetime import datetime
 from ir_datasets import load
+import time
 DEBUG = True
 
 
@@ -17,13 +19,15 @@ DEBUG = True
 class DocumentEntry(BaseModel):
     id: str
     title: str
+    description: str
 
     @staticmethod
     def from_irdocumet(doc: IRDocument) -> Self:
         return DocumentEntry(
             id=doc.doc.doc_id,
             title=doc.doc.title.replace('\n', ' ')
-            .replace(' .', '.').capitalize()
+            .replace(' .', '.').capitalize(),
+            description=doc.doc.text
         )
 
 
@@ -48,6 +52,13 @@ IRS.add_documents((to_rawdocument(d)
 # FastAPI app
 app = FastAPI(debug=DEBUG)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get('/search')
 # Main route to queries
