@@ -1,7 +1,7 @@
 from itertools import islice
 from math import sqrt
 from typing import Callable, Dict, Iterable, List
-from engine.core import IRDocument, IRTerm, IRCollection, IRQuerifier, IRRanker, IRS
+from engine.core import IRDocument, IRCollection, IRQuerifier, IRRanker, IRS
 from engine.tokenizer import tokenize
 
 
@@ -28,7 +28,7 @@ class VectorIRCollection(IRCollection):
 
             # Get the dictionary stored of an empty one if not created and
             # set it
-            document.terms: Dict[IRTerm, int] = getattr(document, 'terms', {})
+            document.terms: Dict[str, int] = getattr(document, 'terms', {})
             # Get the frequency of a term in that document or zero if first
             # occurrence and increase it in one
             document.terms[term] = document.terms.get(term, 0) + 1
@@ -42,7 +42,7 @@ class VectorIRCollection(IRCollection):
     def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
         return [self.add_document(d) for d in documents]
 
-    def get_relevance(self, query: Dict[IRTerm, int],
+    def get_relevance(self, query: Dict[str, int],
                       doc: IRDocument) -> float:
 
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
@@ -67,12 +67,12 @@ class VectorIRCollection(IRCollection):
 
 
 class VectorIRQuerifier(IRQuerifier):
-    def querify(self, query: str) -> Dict[IRTerm, int]:
+    def querify(self, query: str) -> Dict[str, int]:
         r = {}
         # Creates a dictionary indexed by terms that stores the
         # frequency of the term in the query (used as weight temporarily)
         for s in tokenize(query):
-            r[IRTerm(s)] = r.get(IRTerm(s), 0)+1
+            r[s] = r.get(s, 0)+1
         return r
 
 

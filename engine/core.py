@@ -14,45 +14,12 @@ class RawDocument(NamedTuple):
     title: str
     text: str
 
-
-class IRTerm:
-    '''
-    Wrapper for a term string used in the IR system to allow store
-    extra information for each term.
-    '''
-    text: str
-
-    def __init__(self, text: str) -> None:
-        self.text = str(text)
-
-    def __str__(self) -> str:
-        return self.text
-
-    def __repr__(self) -> str:
-        return self.text
-
-    def __hash__(self) -> int:
-        return hash(self.text)
-
-    def __eq__(self, __o: object) -> bool:
-        return self.text == __o.text if isinstance(__o, IRTerm) else __o
-
-    def __ne__(self, __o: object) -> bool:
-        return not (self == __o)
-
-    def __lt__(self, __o: object) -> bool:
-        return self.text < str(__o)
-
-    def __gt__(self, __o: object) -> bool:
-        return self.text > str(__o)
-
-
 class IRDocument:
     '''
     Wrapper for a document to allow store a index terms cache and extra
     information.
     '''
-    tokens: Iterable[IRTerm]
+    tokens: Iterable[str]
     doc: RawDocument
 
     def __hash__(self) -> int:
@@ -89,7 +56,7 @@ class IRIndexer():
         '''
         r = IRDocument()
         r.doc = doc
-        r.tokens = (IRTerm(s) for s in tokenize(doc.text))
+        r.tokens = (tokenize(doc.text))
         return r
 
     def __call__(self, doc: RawDocument) -> IRDocument:
@@ -106,7 +73,7 @@ class IRCollection(ABC):
     Specific models implementations may also store extra info about the index
     structure.
     '''
-    terms: Set[IRTerm] = set()
+    terms: Set[str] = set()
     documents: Set[IRDocument] = set()
 
     def __init__(self) -> None:
