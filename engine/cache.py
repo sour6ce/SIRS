@@ -27,6 +27,10 @@ class ICache:
     pass
   
   @abstractmethod
+  def add_documents(self, documents: List[RawDocument]) -> None:
+    pass
+
+  @abstractmethod
   def remove_document(self, documentId: str)->None:
     pass
   
@@ -48,8 +52,8 @@ class VectorCSVCache(ICache):
     self.dirty = True
     return
   
-  def add_document(self, document: List[RawDocument]) -> None:
-    self.documents = self.documents + document
+  def add_documents(self, documents: List[RawDocument]) -> None:
+    self.documents = self.documents + documents
     self.dirty = True
     return
   
