@@ -63,19 +63,25 @@ class VectorCSVCache(ICache):
     return
   
   def remove_document(self, documentId: str) -> None:
-    self.documents = [d for d in self.documents if d.doc_id != documentId]
+    self.documents = [d for d in self.documents if d.doc.doc_id != documentId]
     self.dirty = True
     return
   
   def recalculateDataCache(self)->None:
-    selected_columns = [i.doc_id for i in self.documents]
+    selected_columns = [i.doc.doc_id for i in self.documents]
     selected_columns = [i for i in selected_columns if i in self.fullData.columns]
-    to_add_documents = [i for i in self.documents if i.doc_id not in self.dataCache.columns]
+    to_add_documents = [
+        i for i in self.documents
+        if i.doc.doc_id not in self.dataCache.columns]
     for addingDoc in to_add_documents:
       terms = addingDoc.tokens
       dataframeKeywords = self.fullData.index.values
       toAddTerms = [i for i in terms if i not in dataframeKeywords]
-      newData = pd.DataFrame([[0 for j in self.fullData.columns] for i in toAddTerms], columns=self.fullData.columns,index=toAddTerms)
+      newData = pd.DataFrame(
+          [[0 for j in self.fullData.columns] for i in toAddTerms],
+          columns=self.fullData.columns,
+          index=toAddTerms
+      )
       self.fullData = pd.concat([self.fullData,newData]).sort_index()
       
       termsOccurrences = {i:0 for i in terms}
@@ -83,9 +89,11 @@ class VectorCSVCache(ICache):
         termsOccurrences[term] = termsOccurrences[term] + 1
         
       dataframeKeywordsAllSorted = self.fullData.index.values
-      self.fullData[addingDoc.doc_id] = [termsOccurrences[i] if i in termsOccurrences.keys else 0 for i in dataframeKeywordsAllSorted]
+      self.fullData[addingDoc.doc.doc_id] = [termsOccurrences[i]
+                                             if i in termsOccurrences.keys() else 0
+                                             for i in dataframeKeywordsAllSorted]
       
-    self.dataCache = self.dataCache[[i.doc_id for i in self.documents]]
+    self.dataCache = self.fullData[[i.doc.doc_id for i in self.documents]]
   
   def fitCache(self)->None:
     self.fullData = self.dataCache
