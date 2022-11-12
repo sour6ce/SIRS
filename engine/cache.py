@@ -1,6 +1,8 @@
 from .core import *
 from .tokenizer import *
 import pandas as pd
+import numpy as np
+from os import path
 
 class ICache:
   dirty: bool
@@ -14,13 +16,14 @@ class ICache:
     self.dirty = False
     self.filename = fileName
     self.documents = documents
-    if(fileName == ''):
-      self.dataCache = pd.DataFrame()
-      self.fullData = pd.DataFrame()
+    if (fileName == ''):
       self.filename = 'auto_cache.csv'
-    else:
+    if path.isfile(fileName):
       self.dataCache = pd.read_csv(fileName)
       self.fullData = pd.read_csv(fileName)
+    else:
+      self.dataCache = pd.DataFrame()
+      self.fullData = pd.DataFrame()
     
     
   @abstractmethod 
