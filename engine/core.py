@@ -42,6 +42,14 @@ class IRDocument:
             return self.doc.doc_id > __o.doc.doc_id
         else:
             return self.doc.doc_id > __o
+        
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o,IRDocument):
+            return __o.doc.doc_id==self.doc.doc_id
+        return False
+    
+    def __neq__(self, __o: object) -> bool:
+        return not(self == __o)
 
 
 class IRIndexer():
