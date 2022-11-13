@@ -81,8 +81,6 @@ class IRCollection(ABC):
     Specific models implementations may also store extra info about the index
     structure.
     '''
-    terms: Set[str] = set()
-    documents: Set[IRDocument] = set()
 
     def __init__(self) -> None:
         pass
@@ -122,6 +120,10 @@ class IRCollection(ABC):
             return __o in self.terms
         if isinstance(__o,IRDocument):
             return __o in self.documents
+
+    @abstractmethod
+    def get_documents(self) -> List[IRDocument]:
+        pass
 
 
 class IRQuerifier(ABC):

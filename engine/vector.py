@@ -1,7 +1,7 @@
 from itertools import islice
 from math import sqrt
 from os import path
-from typing import Callable, Dict, Iterable, List
+from typing import Callable, Dict, Iterable, List, Set
 from engine.core import IRDocument, IRCollection, IRQuerifier, IRRanker, IRS
 from engine.tokenizer import tokenize
 from engine.cache import VectorCSVCache
@@ -14,9 +14,15 @@ class VectorIRCollection(IRCollection):
             path.join(path.dirname(__file__), 'vector.cache.csv')
         )
     )
+    docsid: Set[str] = set()
+    documents: List[IRDocument] = []
 
     def add_document(self, document: IRDocument) -> bool:
-        if document.doc.doc_id in self.cache.fullData:
+        id = document.doc.doc_id
+        if id not in self.docsid:
+            self.docsid.add(id)
+            self.documents.append(document)
+        if id in self.cache.fullData:
             return False
         self.cache.add_document(document)
         self.cache.save()
@@ -25,6 +31,12 @@ class VectorIRCollection(IRCollection):
     def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
         docs = np.array(list(documents))
         r = np.array([d.doc.doc_id not in self.cache.fullData for d in docs])
+
+        for d in docs:
+            id: int = d.doc.doc_id
+            if id not in self.docsid:
+                self.docsid.add(id)
+                self.documents.append(d)
 
         n_d = list((d for d, new in zip(docs, r) if new))
         self.cache.add_documents(n_d)
@@ -37,8 +49,8 @@ class VectorIRCollection(IRCollection):
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
 
         d_vec = self.cache.fullData[doc.doc.doc_id]  # Document related vector
-        q_vec = np.array((query.get(word, 0)
-                         for word in d_vec.index))  # Query related vector
+        q_vec = np.fromiter((query.get(word, 0)
+                         for word in d_vec.index),dtype=int)  # Query related vector
 
         mult = np.sum(d_vec*q_vec)  # Dot product
 
@@ -51,6 +63,9 @@ class VectorIRCollection(IRCollection):
         sim = mult/(n_d*n_q)
 
         return sim
+
+    def get_documents(self) -> List[IRDocument]:
+        return self.documents
 
 
 class VectorIRQuerifier(IRQuerifier):
