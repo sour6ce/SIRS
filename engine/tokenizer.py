@@ -12,6 +12,7 @@ def clean_text(text: str) -> str:
 
 
 def tokenize(text: str) -> Iterable[str]:
+    clean = clean_text(text)
     r = (word for word in (r.group()
-         for r in tokens.finditer(clean_text(text))) if word not in STOPWORDS)
+         for r in tokens.finditer(clean)) if word not in STOPWORDS)
     return r

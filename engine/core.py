@@ -1,9 +1,10 @@
 '''Core and abstract functionality of the IR system'''
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, RawDocument, Iterable, NamedTuple, Set
+from typing import Any, Callable, List, Iterable, NamedTuple, Set
 from .tokenizer import tokenize
 
+# TODO: A big cache system (took 250s to build the system)
 
 class RawDocument(NamedTuple):
     '''
@@ -13,43 +14,42 @@ class RawDocument(NamedTuple):
     title: str
     text: str
 
-
-class IRTerm:
-    '''
-    Wrapper for a term string used in the IR system to allow store
-    extra information for each term.
-    '''
-    text: str
-
-    def __init__(self, text: str) -> None:
-        self.text = str(text)
-
-    def __str__(self) -> str:
-        return self.text
-
-    def __repr__(self) -> str:
-        return self.text
-
-    def __hash__(self) -> int:
-        return hash(self.text)
-
-    def __eq__(self, __o: object) -> bool:
-        return self.text == __o.text if isinstance(__o, IRTerm) else __o
-
-    def __ne__(self, __o: object) -> bool:
-        return not (self == __o)
-
-
 class IRDocument:
     '''
     Wrapper for a document to allow store a index terms cache and extra
     information.
     '''
-    tokens: Iterable[IRTerm]
+    tokens: List[str]
     doc: RawDocument
 
     def __hash__(self) -> int:
-        return hash(self.doc)
+        return hash(self.doc.doc_id)
+
+    def __str__(self) -> str:
+        return self.doc.title.capitalize()
+
+    def __repr__(self) -> str:
+        return self.doc.title.capitalize()
+
+    def __lt__(self, __o: object) -> bool:
+        if isinstance(__o, IRDocument):
+            return self.doc.doc_id < __o.doc.doc_id
+        else:
+            return self.doc.doc_id < __o
+
+    def __gt__(self, __o: object) -> bool:
+        if isinstance(__o, IRDocument):
+            return self.doc.doc_id > __o.doc.doc_id
+        else:
+            return self.doc.doc_id > __o
+        
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o,IRDocument):
+            return __o.doc.doc_id==self.doc.doc_id
+        return False
+    
+    def __neq__(self, __o: object) -> bool:
+        return not(self == __o)
 
 
 class IRIndexer():
@@ -64,7 +64,7 @@ class IRIndexer():
         '''
         r = IRDocument()
         r.doc = doc
-        r.tokens = tokenize(doc.text)
+        r.tokens = list(tokenize(doc.text))
         return r
 
     def __call__(self, doc: RawDocument) -> IRDocument:
@@ -81,8 +81,6 @@ class IRCollection(ABC):
     Specific models implementations may also store extra info about the index
     structure.
     '''
-    terms: Set[IRTerm] = set()
-    documents: Set[IRDocument] = set()
 
     def __init__(self) -> None:
         pass
@@ -115,6 +113,16 @@ class IRCollection(ABC):
         Method to get a relevance object from a
         query with a given `IRDocument` of the system.
         '''
+        pass
+    
+    def __contains__(self, __o: IRDocument | str):
+        if isinstance(__o,str):
+            return __o in self.terms
+        if isinstance(__o,IRDocument):
+            return __o in self.documents
+
+    @abstractmethod
+    def get_documents(self) -> List[IRDocument]:
         pass
 
 
@@ -163,10 +171,16 @@ class IRS():
     Main class of the engine, works as a pipeline for main operations
     in the IR system (add documents and)
     '''
-    indexer: IRIndexer
+    indexer: IRIndexer = IRIndexer()
     collection: IRCollection
     querifier: IRQuerifier
     ranker: IRRanker
+
+    def __init__(self) -> None:
+        self.indexer.irs = self
+        self.collection.irs = self
+        self.querifier.irs = self
+        self.ranker.irs = self
 
     def add_document(self, doc: RawDocument) -> bool:
         return self.collection.add_document(self.indexer(doc))
