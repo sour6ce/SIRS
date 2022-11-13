@@ -1,7 +1,7 @@
 from math import sqrt
 from typing import Dict, Iterable, List, Set
 from ..core import IRCollection
-from ..cache import VectorCSVCache
+from .__vcache import VectorCSVCache
 from ..core import IRDocument
 from os import path
 import numpy as np
