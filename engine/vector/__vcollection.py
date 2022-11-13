@@ -1,10 +1,9 @@
-from itertools import islice
 from math import sqrt
+from typing import Dict, Iterable, List, Set
+from ..core import IRCollection
+from ..cache import VectorCSVCache
+from ..core import IRDocument
 from os import path
-from typing import Callable, Dict, Iterable, List, Set
-from engine.core import IRDocument, IRCollection, IRQuerifier, IRRanker, IRS
-from engine.tokenizer import tokenize
-from engine.cache import VectorCSVCache
 import numpy as np
 
 
@@ -49,8 +48,9 @@ class VectorIRCollection(IRCollection):
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
 
         d_vec = self.cache.fullData[doc.doc.doc_id]  # Document related vector
-        q_vec = np.fromiter((query.get(word, 0)
-                         for word in d_vec.index),dtype=int)  # Query related vector
+        q_vec = np.fromiter(
+            (query.get(word, 0) for word in d_vec.index),
+            dtype=int)  # Query related vector
 
         mult = np.sum(d_vec*q_vec)  # Dot product
 
@@ -66,44 +66,3 @@ class VectorIRCollection(IRCollection):
 
     def get_documents(self) -> List[IRDocument]:
         return self.documents
-
-
-class VectorIRQuerifier(IRQuerifier):
-    def querify(self, query: str) -> Dict[str, int]:
-        r = {}
-        # Creates a dictionary indexed by terms that stores the
-        # frequency of the term in the query (used as weight temporarily)
-        for s in tokenize(query):
-            r[s] = r.get(s, 0)+1
-        return r
-
-
-class VectorIRRanker(IRRanker):
-    def rank(
-            self, docs: Iterable[IRDocument],
-            rel_func: Callable[[IRDocument], float]
-    ) -> List[IRDocument]:
-        docs = list(docs)  # List out of the documents
-
-        # List of the same size with relevance
-        rel = [rel_func(d) for d in docs]
-
-        # Zip both lists into tuples (relevance,document) for sorting
-        l = list(zip(rel, docs))
-        l.sort(reverse=True)
-
-        # Gets the first index where the relevance is zero or less
-        # (first not relevant document)
-        n_index = next((i for i, (r, _) in enumerate(l) if r <= .0), len(l))
-
-        # Get only the documents from the sorted tuple list while the
-        # first not relevant document has not been reached
-        l = [d for _, d in islice(l, n_index)]
-
-        return l
-
-
-class VectorIRS(IRS):
-    ranker = VectorIRRanker()
-    collection = VectorIRCollection()
-    querifier = VectorIRQuerifier()
