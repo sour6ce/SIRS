@@ -6,12 +6,10 @@ from typing_extensions import Self
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from engine.core import IRDocument
-from engine.cranfield import to_rawdocument
+from engine.cranfield import CranfieldGetter, dataset
 from engine.vector import VectorIRS
+from engine.core import DOCID
 from datetime import datetime
-from ir_datasets import load
-import time
 DEBUG = True
 
 
@@ -21,15 +19,6 @@ class DocumentEntry(BaseModel):
     title: str
     description: str
 
-    @staticmethod
-    def from_irdocumet(doc: IRDocument) -> Self:
-        return DocumentEntry(
-            id=doc.doc.doc_id,
-            title=doc.doc.title.replace('\n', ' ')
-            .replace(' .', '.').capitalize(),
-            description=doc.doc.text
-        )
-
 
 # Basic logging configuration
 log_file = path.abspath(path.join(
@@ -38,16 +27,27 @@ log_file = path.abspath(path.join(
     (str(datetime.now())+'.log').replace(' ', '-').replace(':', '-')
 ))
 logging.basicConfig(filename=log_file, filemode='w',
-    level=logging.DEBUG if DEBUG else logging.WARNING)
+                    level=logging.DEBUG if DEBUG else logging.WARNING)
 
 # Basic vector IR system
 IRS = VectorIRS()
 
 # Cranfield dataset load
+IRS.data_getter = CranfieldGetter()
 MAX_DOCUMENTS = 100
-cran = load('cranfield')
-IRS.add_documents((to_rawdocument(d)
-                   for d in islice(cran.docs_iter(), MAX_DOCUMENTS)))
+IRS.add_documents((d.doc_id
+                   for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
+
+
+def irdoc_to_dto(doc: DOCID) -> DocumentEntry:
+    doc = IRS.data_getter(doc)
+    return DocumentEntry(
+        id=doc.doc_id,
+        title=doc.title.replace('\n', ' ')
+        .replace(' .', '.').capitalize(),
+        description=doc.text
+    )
+
 
 # FastAPI app
 app = FastAPI(debug=DEBUG)
@@ -60,7 +60,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get('/search')
 # Main route to queries
 async def root(q: str, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
-    return [DocumentEntry.from_irdocumet(d) for d in islice(IRS.query(q), (page-1)*pagesize, pagesize*page)]
+    return [irdoc_to_dto(d) for d in islice(IRS.query(q), (page-1)*pagesize, pagesize*page)]
