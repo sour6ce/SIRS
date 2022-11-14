@@ -1,48 +1,52 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from ..core.cache import ICache
-from ..core import IRDocument
 import pandas as pd
+from ..core import DOCID, INDEX
 
 class VectorCSVCache(ICache):
+  __indexes: Dict[DOCID, INDEX] = {}
+
   def __init__(
-          self, fileName: str = '', documents: List[IRDocument] = []) -> None:
-    super().__init__(fileName, documents)
+          self, fileName: str = '') -> None:
+    super().__init__(fileName)
     
-  def add_document(self, document: IRDocument) -> None:
-    self.documents.append(document)
-    self.dirty = True
-    return
+  def add_document(self, document: Tuple[DOCID, INDEX]) -> None:
+    if document[0] not in self.fullData.columns:
+      self.documents.append(document[0])
+      self.__indexes[document[0]] = document[1]
+      self.dirty = True
   
-  def add_documents(self, documents: List[IRDocument]) -> None:
-    self.documents = self.documents + documents
+  def add_documents(self, documents: List[Tuple[DOCID, INDEX]]) -> None:
+    documents = [(d, i) for d, i in documents if d not in self.fullData.columns]
+    self.__indexes.update(documents)
     self.dirty = len(documents) != 0
     return
   
-  def remove_document(self, documentId: str) -> None:
-    self.documents = [d for d in self.documents if d.doc.doc_id != documentId]
-    self.dirty = True
-    return
+  def remove_document(self, documentId: DOCID) -> None:
+    # TODO: remove document implementation in cache
+    raise NotImplementedError()
+
+  def update_document(self, documentId: DOCID, newIndex: INDEX) -> None:
+    # TODO: update document implementation in cache
+    raise NotImplementedError()
   
   def recalculateDataCache(self)->None:
-    selected_columns = [i.doc.doc_id for i in self.documents]
-    selected_columns = [i for i in selected_columns if i in self.fullData.columns]
-    to_add_documents = [
-        i for i in self.documents
-        if i.doc.doc_id not in self.fullData.columns]
+    to_add_documents = list(self.__indexes.keys())
 
-    def freq(doc: IRDocument):
+    def freq(doc: DOCID):
       d: Dict[str, int] = dict()
-      for term in doc.tokens:
+      for term in self.__indexes[doc]:
         d[term] = d.get(term, 0+1)
       return d
 
-    def ser(doc: IRDocument):
+    def ser(doc: DOCID):
       f = freq(doc)
       return pd.Series(data=f.values(), index=f.keys(), dtype=int)
 
-    new_df = pd.DataFrame({doc.doc.doc_id: ser(doc)
+    new_df = pd.DataFrame({doc: ser(doc)
                           for doc in to_add_documents})
     self.fullData = pd.concat([self.fullData, new_df]).fillna(0).sort_index()
+    self.__indexes = {}
   
   def fitCache(self)->None:
     self.fullData = self.dataCache

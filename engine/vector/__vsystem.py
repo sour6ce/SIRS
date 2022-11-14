@@ -5,6 +5,8 @@ from .__vranker import VectorIRRanker
 
 
 class VectorIRS(IRS):
-    ranker = VectorIRRanker()
-    collection = VectorIRCollection()
-    querifier = VectorIRQuerifier()
+    def __init__(self) -> None:
+        super().__init__()
+        self.querifier = VectorIRQuerifier()
+        self.collection = VectorIRCollection()
+        self.ranker = VectorIRRanker()

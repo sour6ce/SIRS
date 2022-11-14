@@ -1,7 +1,7 @@
+from typing import List
 from .__raw import *
-from .__irdocument import *
 from ..tokenizer import tokenize
-
+INDEX = List[str]
 
 class IRIndexer():
     '''
@@ -9,16 +9,13 @@ class IRIndexer():
     terms (tokens) to index.
     '''
 
-    def index(self, doc: RawDocumentData) -> IRDocument:
+    def index(self, doc: RawDocumentData) -> INDEX:
         '''
         Main method of the class to cast.
         '''
-        r = IRDocument()
-        r.doc = doc
-        r.tokens = list(tokenize(doc.text))
-        return r
+        return list(tokenize(doc.text))
 
-    def __call__(self, doc: RawDocumentData) -> IRDocument:
+    def __call__(self, doc: RawDocumentData) -> INDEX:
         '''
         Calls the `index` method.
         '''

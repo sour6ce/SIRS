@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, List
-from .__irdocument import IRDocument
+from .__raw import DOCID
 
 
 class IRCollection(ABC):
@@ -15,7 +15,7 @@ class IRCollection(ABC):
         pass
 
     @abstractmethod
-    def add_document(self, document: IRDocument) -> bool:
+    def add_document(self, document: DOCID) -> None:
         '''
         Method to add a document to the collection. 
 
@@ -25,7 +25,7 @@ class IRCollection(ABC):
         pass
 
     @abstractmethod
-    def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
+    def add_documents(self, documents: Iterable[DOCID]) -> None:
         '''
         Method to add more than one document to the collection.
         Separated from the single version to allow optimization.
@@ -37,19 +37,13 @@ class IRCollection(ABC):
 
     @abstractmethod
     def get_relevance(self, query: Any,
-                      doc: IRDocument) -> Any:
+                      doc: DOCID) -> Any:
         '''
         Method to get a relevance object from a
         query with a given `IRDocument` of the system.
         '''
         pass
 
-    def __contains__(self, __o: IRDocument | str):
-        if isinstance(__o, str):
-            return __o in self.terms
-        if isinstance(__o, IRDocument):
-            return __o in self.documents
-
     @abstractmethod
-    def get_documents(self) -> List[IRDocument]:
+    def get_documents(self) -> List[DOCID]:
         pass

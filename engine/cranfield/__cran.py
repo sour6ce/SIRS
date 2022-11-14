@@ -1,7 +1,13 @@
 '''Cranfield Specific Implementations for IR system'''
 
-from .core import *
+from ..core import *
 from ir_datasets.datasets.cranfield import CranfieldDoc
+from ir_datasets.indices.base import Docstore
+from ir_datasets import load, Dataset
+
+dataset: Dataset = load('cranfield')
+
+docstore: Docstore = dataset.docs_store()
 
 
 def get_cran_text(c_doc: CranfieldDoc) -> str:
@@ -24,3 +30,8 @@ def to_rawdocument(c_doc: CranfieldDoc) -> RawDocumentData:
         title=c_doc.title,
         text=get_cran_text(c_doc)
     )
+
+
+class CranfieldGetter(RawDataGetter):
+    def getdata(self, doc: DOCID) -> RawDocumentData:
+        return to_rawdocument(docstore.get(dfx(doc)))

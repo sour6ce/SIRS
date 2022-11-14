@@ -1,8 +1,8 @@
 from math import sqrt
 from typing import Dict, Iterable, List, Set
-from ..core import IRCollection
+from ..core import IRCollection, IRS
 from .__vcache import VectorCSVCache
-from ..core import IRDocument
+from ..core import DOCID, INDEX
 from os import path
 import numpy as np
 
@@ -13,41 +13,37 @@ class VectorIRCollection(IRCollection):
             path.join(path.dirname(__file__), 'vector.cache.csv')
         )
     )
-    docsid: Set[str] = set()
-    documents: List[IRDocument] = []
 
-    def add_document(self, document: IRDocument) -> bool:
-        id = document.doc.doc_id
-        if id not in self.docsid:
-            self.docsid.add(id)
-            self.documents.append(document)
-        if id in self.cache.fullData:
-            return False
-        self.cache.add_document(document)
-        self.cache.save()
-        return True
+    def __get_index(self, doc: DOCID) -> INDEX:
+        irs: IRS = self.irs
+        rd = irs.data_getter(doc)
+        ind = irs.indexer(rd)
+        return ind
 
-    def add_documents(self, documents: Iterable[IRDocument]) -> Iterable[bool]:
-        docs = np.array(list(documents))
-        r = np.array([d.doc.doc_id not in self.cache.fullData for d in docs])
+    def add_document(self, document: DOCID) -> None:
+        if document not in self.cache.fullData:
+            ind = self.__get_index(document)
+            self.cache.add_document((document, ind))
+            self.cache.save()
 
-        for d in docs:
-            id: int = d.doc.doc_id
-            if id not in self.docsid:
-                self.docsid.add(id)
-                self.documents.append(d)
+    def add_documents(self, documents: Iterable[DOCID]) -> None:
+        docs = np.array(list(
+            (
+                d for d in documents if d not in self.cache.fullData
+            )
+        )
+        )
 
-        n_d = list((d for d, new in zip(docs, r) if new))
+        n_d = list(((d, self.__get_index(d)) for d in docs))
         self.cache.add_documents(n_d)
         self.cache.save()
-        return r
 
     def get_relevance(self, query: Dict[str, int],
-                      doc: IRDocument) -> float:
+                      doc: DOCID) -> float:
 
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
 
-        d_vec = self.cache.fullData[doc.doc.doc_id]  # Document related vector
+        d_vec = self.cache.fullData[doc]  # Document related vector
         q_vec = np.fromiter(
             (query.get(word, 0) for word in d_vec.index),
             dtype=int)  # Query related vector
@@ -64,5 +60,5 @@ class VectorIRCollection(IRCollection):
 
         return sim
 
-    def get_documents(self) -> List[IRDocument]:
-        return self.documents
+    def get_documents(self) -> List[DOCID]:
+        return list(self.cache.fullData.columns)

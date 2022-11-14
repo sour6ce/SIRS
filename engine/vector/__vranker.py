@@ -1,13 +1,13 @@
 from itertools import islice
 from typing import Callable, Iterable, List
-from ..core import IRDocument, IRRanker
+from ..core import DOCID, IRRanker
 
 
 class VectorIRRanker(IRRanker):
     def rank(
-            self, docs: Iterable[IRDocument],
-            rel_func: Callable[[IRDocument], float]
-    ) -> List[IRDocument]:
+            self, docs: Iterable[DOCID],
+            rel_func: Callable[[DOCID], float]
+    ) -> List[DOCID]:
         docs = list(docs)  # List out of the documents
 
         # List of the same size with relevance

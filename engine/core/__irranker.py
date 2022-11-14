@@ -1,7 +1,6 @@
-
+from .__raw import DOCID
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable, List
-from .__irdocument import IRDocument
 
 
 class IRRanker(ABC):
@@ -10,15 +9,15 @@ class IRRanker(ABC):
     from a list of this documents with their relevance function.
     '''
     @abstractmethod
-    def rank(self, docs: Iterable[IRDocument],
-             rel_func: Callable[[IRDocument], Any]) -> List[IRDocument]:
+    def rank(self, docs: Iterable[DOCID],
+             rel_func: Callable[[DOCID], Any]) -> List[DOCID]:
         '''
         Main method of the ranking class.
         '''
         pass
 
-    def __call__(self, docs: Iterable[IRDocument],
-                 rel_func: Callable[[IRDocument], Any]) -> List[IRDocument]:
+    def __call__(self, docs: Iterable[DOCID],
+                 rel_func: Callable[[DOCID], Any]) -> List[DOCID]:
         '''
         Calls the `rank` method.
         '''
