@@ -5,6 +5,7 @@ from .__vcache import VectorCSVCache
 from ..core import DOCID, INDEX
 from os import path
 import numpy as np
+import pandas as pd
 
 
 class VectorIRCollection(IRCollection):
@@ -38,15 +39,21 @@ class VectorIRCollection(IRCollection):
         self.cache.add_documents(n_d)
         self.cache.save()
 
-    def get_relevance(self, query: Dict[str, int],
+    def get_relevance(self, query: pd.DataFrame,
                       doc: DOCID) -> float:
 
         # TODO: Use weighted values (tf,idf,etc) instead of just frequency
+        df = self.cache.fullData
 
-        d_vec = self.cache.fullData[doc]  # Document related vector
-        q_vec = np.fromiter(
-            (query.get(word, 0) for word in d_vec.index),
-            dtype=int)  # Query related vector
+        query.index.name = 'term'
+        d_vec = df[df[doc] != 0][doc]  # Document related vector
+        # ds = pd.Series(data=[d for d in d_vec], index=[i for i in d_vec.index])
+        # ddf = pd.DataFrame({'doc': ds})
+        d_vec.index.name = 'term'
+        df = pd.concat([d_vec, query]).fillna(0).groupby('term').sum()
+
+        d_vec = np.array(df[0])
+        q_vec = np.array(df['query'])
 
         mult = np.sum(d_vec*q_vec)  # Dot product
 
