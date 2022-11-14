@@ -64,4 +64,8 @@ app.add_middleware(
 @app.get('/search')
 # Main route to queries
 async def root(q: str, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
-    return [irdoc_to_dto(d) for d in islice(IRS.query(q), (page-1)*pagesize, pagesize*page)]
+    results = [irdoc_to_dto(d)
+               for d in islice(
+                   IRS.query(q),
+                   (page - 1) * pagesize, pagesize * page)]
+    return results
