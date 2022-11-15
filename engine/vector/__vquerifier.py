@@ -13,5 +13,7 @@ class VectorIRQuerifier(IRQuerifier):
 
         qs = pd.Series(data=r.values(), index=r.keys())
         qdf = pd.DataFrame({'query': qs})
+        qdf.sort_index(inplace=True)
+        qdf.index.name = 'term'
 
         return qdf

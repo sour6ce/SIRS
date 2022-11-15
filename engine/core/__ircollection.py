@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Tuple
 from .__raw import DOCID
 
 
@@ -42,6 +42,10 @@ class IRCollection(ABC):
         Method to get a relevance object from a
         query with a given `IRDocument` of the system.
         '''
+        pass
+
+    @abstractmethod
+    def get_relevances(self, query: Any) -> List[Tuple[DOCID, Any]]:
         pass
 
     @abstractmethod
