@@ -1,9 +1,15 @@
+from itertools import islice
 from typing import Iterable, List
 from .__ircollection import IRCollection
 from .__irindexer import IRIndexer
 from .__raw import RawDataGetter, DOCID, fx
 from .__irquerifier import IRQuerifier
-from .__irranker import IRRanker
+import cProfile as prof
+from os import path
+from datetime import datetime
+import os
+import pstats as st
+
 
 class IRS():
     '''
@@ -13,7 +19,6 @@ class IRS():
     __indexer: IRIndexer = IRIndexer()
     __collection: IRCollection
     __querifier: IRQuerifier
-    __ranker: IRRanker
     __data_getter: RawDataGetter
 
     @property
@@ -44,15 +49,6 @@ class IRS():
         self.__querifier.irs = self
 
     @property
-    def ranker(self) -> IRCollection:
-        return self.__ranker
-
-    @ranker.setter
-    def ranker(self, value) -> None:
-        self.__ranker = value
-        self.__ranker.irs = self
-
-    @property
     def data_getter(self) -> IRCollection:
         return self.__data_getter
 
@@ -69,8 +65,32 @@ class IRS():
         return coll.add_documents([fx(d) for d in list(docs)])
 
     def query(self, q: str) -> List[DOCID]:
+        # Profiler initialization
         proc_q = (self.querifier)(q)
-        return self.ranker(
-            self.collection.get_documents(),
-            lambda x: self.collection.get_relevance(proc_q, x)
-        )
+        prof_dir = path.abspath(path.join(path.dirname(
+            __file__), 'profiles'))
+        os.makedirs(prof_dir, exist_ok=True)
+        prof_filename = path.join(
+            prof_dir, (f'{datetime.now()}.prof').replace(':', '.').replace(
+                '-', '.'))
+        prof_file = open(prof_filename, mode='w')
+        pr = prof.Profile()
+
+        pr.enable()  # Start Profiling
+
+        # Calculates relevance of all documents
+        r = self.collection.get_relevances(proc_q)
+
+        # Filter relevance >=0
+        n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
+        r = [d for d, _ in islice(r, n_index)]
+
+        pr.disable()  # End profiling
+
+        # Write profiler stats
+        st.Stats(pr, stream=prof_file).sort_stats(
+            st.SortKey.CUMULATIVE).print_stats(150)
+
+        prof_file.close()
+
+        return r

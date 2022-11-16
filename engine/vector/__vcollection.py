@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List, Tuple
 from ..core import IRCollection, IRS
 from .__vcache import VectorCSVCache
 from ..core import DOCID, INDEX
@@ -42,7 +42,7 @@ class VectorIRCollection(IRCollection):
     def get_relevance(self, query: pd.DataFrame,
                       doc: DOCID) -> float:
 
-        # TODO: Use weighted values (tf,idf,etc) instead of just frequency
+        # TODO: Delete or change to tf,idf
         df = self.cache.fullData
 
         query.index.name = 'term'
@@ -66,6 +66,49 @@ class VectorIRCollection(IRCollection):
         sim = mult/(n_d*n_q)
 
         return sim
+
+    def get_relevances(
+            self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
+        query.columns.set_names('query')
+
+        A = .5  # Query smoother
+
+        df0 = self.cache.fullData
+
+        maxfr = df0.max()
+        ni = df0.astype(bool).sum(axis=1)
+        N = len(df0.columns)
+        idf = ni/N
+        idf = idf.pow(-1)
+        idf = np.log(idf)
+
+        df0 /= maxfr  # tf
+
+        maxfrq = query.max()
+        query /= maxfrq
+        query *= 1-A
+        query += A
+
+        df = (pd.concat([df0, query]).fillna(0).groupby('term').sum().T*(idf)).T
+
+        query = df['query']
+
+        dup_df = df * df
+        dup_df = dup_df.sum()
+
+        nd_df = np.sqrt(dup_df)
+        nq_df = nd_df['query']
+
+        df.drop('query', axis=1, inplace=True)
+        mult_df = query@df
+
+        nd_df.drop('query', inplace=True)
+        r: pd.DataFrame = mult_df/nd_df
+        r /= nq_df
+
+        r.sort_values(inplace=True, ascending=False)
+
+        return [(k, v) for k, v in r.items()]
 
     def get_documents(self) -> List[DOCID]:
         return list(self.cache.fullData.columns)
