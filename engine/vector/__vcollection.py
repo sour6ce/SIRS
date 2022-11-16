@@ -71,10 +71,25 @@ class VectorIRCollection(IRCollection):
             self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
         query.columns.set_names('query')
 
+        A = .5  # Query smoother
+
         df0 = self.cache.fullData
-        df0.index.name = 'term'
-        df = pd.concat([df0, query]).fillna(
-            0).groupby('term').sum()
+
+        maxfr = df0.max()
+        ni = df0.astype(bool).sum(axis=1)
+        N = len(df0.columns)
+        idf = ni/N
+        idf = idf.pow(-1)
+        idf = np.log(idf)
+
+        df0 /= maxfr  # tf
+
+        maxfrq = query.max()
+        query /= maxfrq
+        query *= 1-A
+        query += A
+
+        df = (pd.concat([df0, query]).fillna(0).groupby('term').sum().T*(idf)).T
 
         query = df['query']
 

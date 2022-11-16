@@ -4,7 +4,6 @@ from .__ircollection import IRCollection
 from .__irindexer import IRIndexer
 from .__raw import RawDataGetter, DOCID, fx
 from .__irquerifier import IRQuerifier
-from .__irranker import IRRanker
 import cProfile as prof
 from os import path
 from datetime import datetime
@@ -19,7 +18,6 @@ class IRS():
     __indexer: IRIndexer = IRIndexer()
     __collection: IRCollection
     __querifier: IRQuerifier
-    __ranker: IRRanker
     __data_getter: RawDataGetter
 
     @property
