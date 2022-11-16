@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 import pstats as st
 
+
 class IRS():
     '''
     Main class of the engine, works as a pipeline for main operations
@@ -46,15 +47,6 @@ class IRS():
     def querifier(self, value) -> None:
         self.__querifier = value
         self.__querifier.irs = self
-
-    @property
-    def ranker(self) -> IRCollection:
-        return self.__ranker
-
-    @ranker.setter
-    def ranker(self, value) -> None:
-        self.__ranker = value
-        self.__ranker.irs = self
 
     @property
     def data_getter(self) -> IRCollection:
