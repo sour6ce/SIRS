@@ -1,14 +1,16 @@
+from math import sqrt
+from typing import List, Tuple
 from ..vector import VectorIRCollection
 from os import path
 import numpy as np
 import pandas as pd
+from ..core import DOCID
 
 class BooleanIRCollection(VectorIRCollection):
 
     def get_relevance(self, query: pd.DataFrame,
                       doc: DOCID) -> float:
 
-        # TODO: Delete or change to tf,idf
         df = self.cache.fullData
 
         query.index.name = 'term'
@@ -34,44 +36,31 @@ class BooleanIRCollection(VectorIRCollection):
         return sim
 
     def get_relevances(
-            self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
-        query.columns.set_names('query')
-
-        A = .5  # Query smoother
-
+            self, query: Tuple[List[pd.DataFrame],List[pd.DataFrame]]) -> List[Tuple[DOCID, float]]:
+        
+        #cache vector data
         df0 = self.cache.fullData
+        #matrix turned to boolean
+        df1= df0.astype(bool)
+        #terms vectors
+        query0 = query[0]
+        #boolean mask vectors
+        query_bm = query[1]        
+        
+        #concat vector to the data frame and obtain data frame and vector modificated
+        for q1, q2 in query0, query_bm:
+            #data frame with terms vectors concated
+            q1.columns.set_names('test')
+            df1 = (pd.concat([df1,q1]).fillna(0).groupby('term'))
+            q1 = df1['test']
+            df1 = df1.drop('test')
+            
+            #data frame with boolean mask concated
+            q2.columns.set_names('test')            
+            df2 = (pd.concat([df2,q2]).fillna(0).groupby('term'))
+            q2 = df2['test']
+            df2 = df2.drop('test')
+        
+        #missing Xor annd * and 0 comprobation to relevance
 
-        maxfr = df0.max()
-        ni = df0.astype(bool).sum(axis=1)
-        N = len(df0.columns)
-        idf = ni/N
-        idf = idf.pow(-1)
-        idf = np.log(idf)
-
-        df0 /= maxfr  # tf
-
-        maxfrq = query.max()
-        query /= maxfrq
-        query *= 1-A
-        query += A
-
-        df = (pd.concat([df0, query]).fillna(0).groupby('term').sum().T*(idf)).T
-
-        query = df['query']
-
-        dup_df = df * df
-        dup_df = dup_df.sum()
-
-        nd_df = np.sqrt(dup_df)
-        nq_df = nd_df['query']
-
-        df.drop('query', axis=1, inplace=True)
-        mult_df = query@df
-
-        nd_df.drop('query', inplace=True)
-        r: pd.DataFrame = mult_df/nd_df
-        r /= nq_df
-
-        r.sort_values(inplace=True, ascending=False)
-
-        return [(k, v) for k, v in r.items()]
+        return 0

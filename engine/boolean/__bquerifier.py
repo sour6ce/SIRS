@@ -36,6 +36,9 @@ class BooleanIRQuerifier(IRQuerifier):
         #query data frame
         #mascara de bits :'v
         q_df_bm = [pd.DataFrame({'query': pd.Series(data=[1]*len(q) ,index=q)}) for q in q_sym1]
+        for q in q_df_bm:
+            q.sort_index(inplace=True)
+            q.index.name = 'term'
         
         #vector aparicion de palabras
         q_df=[]
@@ -51,6 +54,9 @@ class BooleanIRQuerifier(IRQuerifier):
             q_sym3.append(q_dict)
         
         q_df = [pd.DataFrame({'query': pd.Series(data=[1]*len(q) ,index=q)}) for q in q_sym3]
+        for q in q_df:
+            q.sort_index(inplace=True)
+            q.index.name = 'term'
         
         return(q_df, q_df_bm)
         
