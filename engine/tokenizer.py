@@ -7,12 +7,13 @@ tokens = re.compile(r"[a-zA-Z'0-9]+")
 
 
 def clean_text(text: str) -> str:
-    return multi_space.sub(' ', text.strip().lower().replace('\t', ' ')
-                           .replace('\n', ' ').replace('-', ' '))
+    return multi_space.sub(' ', text.strip().replace('\t', ' ')
+                           .replace('\n', ' ').replace('-', ' ')
+                           .replace(' .', '.').capitalize())
 
 
 def tokenize(text: str) -> Iterable[str]:
-    clean = clean_text(text)
+    clean = clean_text(text).lower()
     r = (word for word in (r.group()
          for r in tokens.finditer(clean)) if word not in STOPWORDS)
     return r
