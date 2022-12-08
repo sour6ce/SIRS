@@ -47,20 +47,39 @@ class BooleanIRCollection(VectorIRCollection):
         #boolean mask vectors
         query_bm = query[1]        
         
-        #concat vector to the data frame and obtain data frame and vector modificated
-        for q1, q2 in query0, query_bm:
-            #data frame with terms vectors concated
-            q1.columns.set_names('test')
-            df1 = (pd.concat([df1,q1]).fillna(0).groupby('term'))
-            q1 = df1['test']
-            df1 = df1.drop('test')
-            
-            #data frame with boolean mask concated
-            q2.columns.set_names('test')            
-            df2 = (pd.concat([df2,q2]).fillna(0).groupby('term'))
-            q2 = df2['test']
-            df2 = df2.drop('test')
-        
-        #missing Xor annd * and 0 comprobation to relevance
+        # documents that match the query
+        docs = set()
 
-        return 0
+        # concat vector to the data frame and obtain data frame and vector modified
+        for q1, q2 in zip(query0, query_bm):
+            terms_size = q2.size
+
+            # data frame with boolean mask aligned
+            align = df1.align(q2, fill_value=0, axis=0)
+            df_normal: pd.DataFrame = align[0]
+            q2 = align[1]
+
+            # data frame with terms vectors aligned
+            q1 = df_normal.align(q1, fill_value=0, axis=0)[1]
+
+            # Repeat every vector query to match the size in columns
+            q1_r = pd.concat([q1]*df_normal.shape[1], axis=1)
+            q2_r = pd.concat([q2]*df_normal.shape[1], axis=1)
+
+            # XOR on term values (term vector)
+            r_xor = np.logical_not(np.logical_xor(
+                df_normal.astype(int),
+                np.asarray(q1_r.astype(int))
+            ))
+            # Check with AND against the mask to see every term that is ok
+            r_total = np.logical_and(
+                r_xor.astype(int),
+                np.asarray(q2_r.astype(int)))
+
+            # Count of term that are ok for each document
+            r_total: pd.Series = r_total.sum()
+            r_total = r_total[r_total == terms_size]
+
+            docs.update(r_total.index)
+
+        return [(d, 1.0) for d in docs]
