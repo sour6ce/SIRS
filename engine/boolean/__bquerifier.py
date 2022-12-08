@@ -13,10 +13,10 @@ class BooleanIRQuerifier(IRQuerifier):
         def __insertAnd(match: re.Match[query]):
             return ' & '.join(match.groups())
         query = query.lower()
-        query = re.compile(r"([a-zA-z'0-9]+)\s+(\(|~)").sub(__insertAnd, query)
-        query = re.compile(r"(\))s+([a-zA-z'0-9]+)").sub(__insertAnd, query)
+        query = re.compile(r"([a-zA-z'0-9])\s+(\(|~)").sub(__insertAnd, query)
+        query = re.compile(r"(\))s+([a-zA-z'0-9])").sub(__insertAnd, query)
         query = re.compile(
-            r"([a-zA-z'0-9]+)\s+([a-zA-z'0-9]+)").sub(__insertAnd, query)
+            r"([a-zA-z'0-9])\s+([a-zA-z'0-9])").sub(__insertAnd, query)
         st = sympify(query, evaluate=False)
         simplification = (
             sympy.logic.boolalg.simplify_logic(
