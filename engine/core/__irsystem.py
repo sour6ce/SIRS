@@ -1,14 +1,9 @@
 from itertools import islice
-from typing import Iterable, List
+from typing import Any, Dict, Iterable, List, Tuple
 from .__ircollection import IRCollection
 from .__irindexer import IRIndexer
 from .__raw import RawDataGetter, DOCID, fx
 from .__irquerifier import IRQuerifier
-import cProfile as prof
-from os import path
-from datetime import datetime
-import os
-import pstats as st
 
 
 class IRS():
@@ -20,6 +15,9 @@ class IRS():
     __collection: IRCollection
     __querifier: IRQuerifier
     __data_getter: RawDataGetter
+
+    # Buffer to store results of a query
+    _query_buffer: Dict[str, List[Tuple[DOCID, Any]]] = {}
 
     @property
     def indexer(self) -> IRIndexer:
@@ -57,40 +55,33 @@ class IRS():
         self.__data_getter = value
         self.__data_getter.irs = self
 
-    def add_document(self, doc: DOCID) -> bool:
-        return self.collection.add_document(fx(doc))
+    def add_document(self, doc: DOCID) -> None:
+        self.collection.add_document(fx(doc))
+        self._query_buffer.clear()
 
-    def add_documents(self, docs: Iterable[DOCID]) -> bool:
+    def add_documents(self, docs: Iterable[DOCID]) -> None:
         coll = self.collection
-        return coll.add_documents([fx(d) for d in list(docs)])
+        coll.add_documents([fx(d) for d in list(docs)])
+        self._query_buffer.clear()
 
     def query(self, q: str) -> List[DOCID]:
-        # Profiler initialization
         proc_q = (self.querifier)(q)
-        prof_dir = path.abspath(path.join(path.dirname(
-            __file__), 'profiles'))
-        os.makedirs(prof_dir, exist_ok=True)
-        prof_filename = path.join(
-            prof_dir, (f'{datetime.now()}.prof').replace(':', '.').replace(
-                '-', '.'))
-        prof_file = open(prof_filename, mode='w')
-        pr = prof.Profile()
 
-        pr.enable()  # Start Profiling
+        q_hash = self.querifier.get_hash()
 
-        # Calculates relevance of all documents
-        r = self.collection.get_relevances(proc_q)
+        r = []
+
+        # Search first in the buffer
+        if (q_hash in self._query_buffer.keys()):
+            r = self._query_buffer[q_hash]
+        else:
+            # Calculates relevance of all documents
+            r = self.collection.get_relevances(proc_q)
+            # Update the buffer
+            self._query_buffer[q_hash] = r
 
         # Filter relevance >=0
         n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
         r = [d for d, _ in islice(r, n_index)]
-
-        pr.disable()  # End profiling
-
-        # Write profiler stats
-        st.Stats(pr, stream=prof_file).sort_stats(
-            st.SortKey.CUMULATIVE).print_stats(150)
-
-        prof_file.close()
 
         return r

@@ -5,9 +5,12 @@ from sympy import sympify
 from engine.core import IRQuerifier
 import pandas as pd
 import re
+import hashlib
     
 
 class BooleanIRQuerifier(IRQuerifier):
+    __last = None
+
     def querify(self, query: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
         #convert a string to a sympy structure
         def __insertAnd(match: re.Match[query]):
@@ -74,5 +77,16 @@ class BooleanIRQuerifier(IRQuerifier):
             q.sort_index(inplace=True)
             q.index.name = 'term'
         
-        return(q_df, q_df_bm)
-        
+        self.__last = (q_df, q_df_bm)
+
+        return (q_df, q_df_bm)
+
+    def get_hash(self) -> str:
+        if self.__last is None:
+            return ''
+        else:
+            h = hashlib.sha512()
+            for q0, qbm in zip(self.__last[0], self.__last[1]):
+                h.update(pd.util.hash_pandas_object(q0).values)
+                h.update(pd.util.hash_pandas_object(qbm).values)
+            return h.hexdigest()
