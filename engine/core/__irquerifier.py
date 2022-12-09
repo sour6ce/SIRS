@@ -20,3 +20,11 @@ class IRQuerifier(ABC):
         Calls the `querify` method.
         '''
         return self.querify(query)
+
+    @abstractmethod
+    def get_hash(self) -> str:
+        '''
+        Method to get a hash to identify the last query querified.
+        Used for engine optimizations.
+        '''
+        pass

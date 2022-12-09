@@ -1,5 +1,5 @@
 from itertools import islice
-from typing import Iterable, List
+from typing import Any, Dict, Iterable, List, Tuple
 from .__ircollection import IRCollection
 from .__irindexer import IRIndexer
 from .__raw import RawDataGetter, DOCID, fx
@@ -15,6 +15,9 @@ class IRS():
     __collection: IRCollection
     __querifier: IRQuerifier
     __data_getter: RawDataGetter
+
+    # Buffer to store results of a query
+    _query_buffer: Dict[str, List[Tuple[DOCID, Any]]] = {}
 
     @property
     def indexer(self) -> IRIndexer:
@@ -52,18 +55,30 @@ class IRS():
         self.__data_getter = value
         self.__data_getter.irs = self
 
-    def add_document(self, doc: DOCID) -> bool:
-        return self.collection.add_document(fx(doc))
+    def add_document(self, doc: DOCID) -> None:
+        self.collection.add_document(fx(doc))
+        self._query_buffer.clear()
 
-    def add_documents(self, docs: Iterable[DOCID]) -> bool:
+    def add_documents(self, docs: Iterable[DOCID]) -> None:
         coll = self.collection
-        return coll.add_documents([fx(d) for d in list(docs)])
+        coll.add_documents([fx(d) for d in list(docs)])
+        self._query_buffer.clear()
 
     def query(self, q: str) -> List[DOCID]:
         proc_q = (self.querifier)(q)
 
-        # Calculates relevance of all documents
-        r = self.collection.get_relevances(proc_q)
+        q_hash = self.querifier.get_hash()
+
+        r = []
+
+        # Search first in the buffer
+        if (q_hash in self._query_buffer.keys()):
+            r = self._query_buffer[q_hash]
+        else:
+            # Calculates relevance of all documents
+            r = self.collection.get_relevances(proc_q)
+            # Update the buffer
+            self._query_buffer[q_hash] = r
 
         # Filter relevance >=0
         n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
