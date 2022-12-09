@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, Iterable
 
 from config import *
 
-EXECUTION_ID = (str(datetime.now())+'.log').replace(' ', '-').replace(':', '-')
+EXECUTION_ID = (str(datetime.now())).replace(' ', '-').replace(':', '-')
 
 
 def debugExcepSilence(f: Callable):
