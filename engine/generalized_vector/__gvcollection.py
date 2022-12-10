@@ -1,5 +1,9 @@
-from ast import List, Tuple
-from engine.vector import VectorIRCollection
+from math import sqrt
+from typing import Dict, Iterable, List, Tuple
+from ..core import IRCollection, IRS
+from ..core import DOCID, INDEX
+from engine.vector.__vcollection import VectorIRCollection
+from os import path
 import numpy as np
 import pandas as pd
 

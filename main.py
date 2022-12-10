@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from engine.cranfield import CranfieldGetter, dataset
 from engine.boolean import BooleanIRS
+from engine.generalized_vector import GeneralizedVectorIRS
 from engine.core import DOCID
 from datetime import datetime
 from engine.tokenizer import clean_text
@@ -25,7 +26,7 @@ class DocumentEntry(BaseModel):
 debug.setupRootLog()
 
 # Basic vector IR system
-IRS = BooleanIRS()
+IRS = GeneralizedVectorIRS()
 
 # Cranfield dataset load
 IRS.data_getter = CranfieldGetter()

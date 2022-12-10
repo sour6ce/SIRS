@@ -1,8 +1,11 @@
-from ast import Dict
 from engine.vector.__vquerifier import VectorIRQuerifier
 from ..tokenizer import tokenize
-import pandas as pd
+from typing import Dict, Iterable, List, Tuple
+from ..core import IRCollection, IRS
+from ..core import DOCID, INDEX
+from os import path
 import numpy as np
+import pandas as pd
 
 #Correlación de Pearson
 def get_term_correlations(df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
@@ -19,7 +22,7 @@ def get_term_correlations(df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
 
     return correlations
 
-'''
+"""
 class GeneralizedVectorIRQuerifier(VectorIRQuerifier):
     __last = None
     
@@ -60,7 +63,8 @@ class GeneralizedVectorIRQuerifier(VectorIRQuerifier):
         self.__last = qdf
 
         return qdf
-'''
+"""
+
 class GeneralizedVectorIRQuerifier(VectorIRQuerifier):
     pass
 
