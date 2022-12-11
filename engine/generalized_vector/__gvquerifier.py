@@ -26,7 +26,7 @@ def get_term_correlations(df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
     return correlations
 '''
 #Correlacion de K-Means
-def get_term_correlations(df: pd.DataFrame, n_clusters: int = 10) -> Dict[str, Dict[str, float]]:
+def get_term_correlations(df: pd.DataFrame, n_clusters: int =1) -> Dict[str, Dict[str, float]]:
     # Calculate term correlations using K-means clustering
     kmeans = KMeans(n_clusters=n_clusters)
     kmeans.fit(df)
@@ -49,10 +49,11 @@ def get_term_correlations(df: pd.DataFrame, n_clusters: int = 10) -> Dict[str, D
         correlations = {}
         for ct in cluster_terms:
             # Calculate correlation coefficient between term and ct
-            coef = pearsonr(df.loc[term], df.loc[ct])[0]
+            if len(df.loc[term]) >= 2 and len(df.loc[ct]) >= 2:
+                coef = pearsonr(df.loc[term], df.loc[ct])[0]
             
-            # Store correlation coefficient in dictionary
-            correlations[ct] = coef
+                # Store correlation coefficient in dictionary
+                correlations[ct] = coef
 
         # Add term correlations to dictionary
         term_correlations[term] = correlations
@@ -73,11 +74,14 @@ class GeneralizedVectorIRQuerifier(VectorIRQuerifier):
         qs = pd.Series(data=term_frequencies.values(), index=term_frequencies.keys())
         qdf = pd.DataFrame({'query': qs})
 
+        # Get term frequencies in documents 
+        df = collection.get_term_frequencies()
+        
         # Set the average of correlation, it could be change, the values are between 0 and 1
         correlation_threshold = 0.8
         
-        # Calculate term correlationsss
-        term_correlations = get_term_correlations(qs)
+        # Calculate term correlations
+        term_correlations = get_term_correlations(df)
 
         # Include correlated terms in query
         for term in qdf.index:
