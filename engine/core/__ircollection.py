@@ -45,7 +45,7 @@ class IRCollection(ABC):
         pass
 
     @abstractmethod
-    def get_relevances(self, query: Any) -> List[Tuple[DOCID, Any]]:
+    def get_relevances(self, query: Any) -> List[Tuple[DOCID, float]]:
         pass
 
     @abstractmethod

@@ -73,25 +73,36 @@ class VectorIRCollection(IRCollection):
 
         A = .5  # Query smoother
 
-        df0 = self.cache.fullData
+        data = self.cache.fullData
 
-        maxfr = df0.max()
-        ni = df0.astype(bool).sum(axis=1)
-        N = len(df0.columns)
+        dal, fq = data.align(query)
+        dal = dal.fillna(0)
+
+        dfidf = dal+fq.fillna(0)
+
+        maxfr = dfidf.max()
+        ni = dfidf.astype(bool).sum(axis=1)
+        N = len(dfidf.columns)
         idf = ni/N
         idf = idf.pow(-1)
         idf = np.log(idf)
 
-        df0 /= maxfr  # tf
+        dal /= maxfr  # tf
 
         maxfrq = query.max()
         query /= maxfrq
         query *= 1-A
         query += A
 
-        df = (pd.concat([df0, query]).fillna(0).groupby('term').sum().T*(idf)).T
+        dal, qal = dal.align(query)
+        dal = dal.fillna(0)
+        qal = qal.fillna(0)
 
-        query = df['query']
+        dfjoin = (dal+qal).T
+        idfres = dfjoin*(idf)
+        df = idfres.T
+
+        qal = df['query']
 
         dup_df = df * df
         dup_df = dup_df.sum()
@@ -99,14 +110,14 @@ class VectorIRCollection(IRCollection):
         nd_df = np.sqrt(dup_df)
         nq_df = nd_df['query']
 
-        df.drop('query', axis=1, inplace=True)
-        mult_df = query@df
+        df = df.drop('query', axis=1)
+        mult_df = qal@df
 
-        nd_df.drop('query', inplace=True)
+        nd_df = nd_df.drop('query')
         r: pd.DataFrame = mult_df/nd_df
         r /= nq_df
 
-        r.sort_values(inplace=True, ascending=False)
+        r = r.sort_values(ascending=False)
 
         return [(k, v) for k, v in r.items()]
 

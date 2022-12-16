@@ -1,1 +1,1 @@
-from .__cran import dataset, docstore, CranfieldGetter
+from .__cran import dataset, docstore, CranfieldGetter, CranfieldQrelsGetter

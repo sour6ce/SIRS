@@ -42,6 +42,23 @@ def setupRootLog():
                         level=logging.DEBUG if DEBUG else logging.WARNING)
 
 
+@debugExcepSilence
+def setupRootLogForTests(test_name: str):
+    log_dir = path.abspath(
+        path.join(path.dirname(__file__),
+                  'logs', 'tests', test_name))
+
+    log_file = path.join(
+        log_dir,
+        f"{EXECUTION_ID}.log"
+    )
+
+    os.makedirs(log_dir, exist_ok=True)
+
+    logging.basicConfig(filename=log_file, filemode='w',
+                        level=logging.DEBUG if DEBUG else logging.WARNING)
+
+
 __profiles__ = {}
 
 

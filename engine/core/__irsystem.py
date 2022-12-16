@@ -17,7 +17,7 @@ class IRS():
     __data_getter: RawDataGetter
 
     # Buffer to store results of a query
-    _query_buffer: Dict[str, List[Tuple[DOCID, Any]]] = {}
+    _query_buffer: Dict[str, List[Tuple[DOCID, float]]] = {}
 
     @property
     def indexer(self) -> IRIndexer:
@@ -65,6 +65,21 @@ class IRS():
         self._query_buffer.clear()
 
     def query(self, q: str) -> List[DOCID]:
+        '''
+        Get a ranking of documents from a query as a text.
+        '''
+        r = self.pre_query(q)
+
+        # Filter relevance >=0
+        n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
+        rank = [d for d, _ in islice(r, n_index)]
+
+        return rank
+
+    def pre_query(self, q) -> List[Tuple[DOCID, Any]]:
+        '''
+        Connect the Querifier to the Collection in order to get
+        '''
         proc_q = (self.querifier)(q)
 
         q_hash = self.querifier.get_hash()
@@ -79,9 +94,4 @@ class IRS():
             r = self.collection.get_relevances(proc_q)
             # Update the buffer
             self._query_buffer[q_hash] = r
-
-        # Filter relevance >=0
-        n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
-        r = [d for d, _ in islice(r, n_index)]
-
         return r
