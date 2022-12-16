@@ -14,7 +14,6 @@ from engine.tokenizer import clean_text
 from config import *
 import debug
 
-
 # Document search result DTO
 class DocumentEntry(BaseModel):
     id: str

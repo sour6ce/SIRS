@@ -1,5 +1,6 @@
 from sklearn.cluster import KMeans
 from engine.vector.__vquerifier import VectorIRQuerifier
+from engine.generalized_vector.__gvcollection import GeneralizedVectorIRCollection 
 from ..tokenizer import tokenize
 from typing import Dict, Iterable, List, Tuple
 from ..core import IRCollection, IRS
@@ -21,7 +22,6 @@ class GeneralizedVectorIRQuerifier(VectorIRQuerifier):
         # Convert dictionary to pandas series
         qs = pd.Series(data=term_frequencies.values(), index=term_frequencies.keys())
         qdf = pd.DataFrame({'query': qs})
-        
         # Sort index of query dataframe
         qdf.sort_index(inplace=True)
         qdf.index.name = 'term'

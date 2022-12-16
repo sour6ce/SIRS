@@ -1,4 +1,3 @@
-from math import sqrt
 from typing import Dict, Iterable, List, Tuple
 from ..core import IRCollection, IRS
 from ..core import DOCID, INDEX
@@ -6,18 +5,19 @@ from engine.vector.__vcollection import VectorIRCollection
 from os import path
 import numpy as np
 import pandas as pd
-import math
+from math import sqrt
 
 class GeneralizedVectorIRCollection(VectorIRCollection):
     def __init__(self):
         super().__init__()
 
-    def get_relevance(self, query: pd.DataFrame,
-                      doc: DOCID) -> float:
+    def get_relevance(self, query: pd.DataFrame,doc: DOCID) -> float:
 
         # TODO: Delete or change to tf,idf
         df = self.cache.fullData
         df = self.generalizedModelModification(df)
+        
+        query = self.generalizedModelModification(query)
         
         query.index.name = 'term'
         d_vec = df[df[doc] != 0][doc]  # Document related vector
@@ -46,7 +46,7 @@ class GeneralizedVectorIRCollection(VectorIRCollection):
         new_arr = np.zeros(arr.shape)
         
         for i in range(arr.shape[1]):
-            new_arr[:, i] = np.multiply(arr[:, i], self.get_ki(i, arr))
+            new_arr[:, i] = np.multiply(arr[:, i], self.get_ki(i, df0))
         
         #update column with new_arr
         df0[df0.columns] = new_arr
@@ -62,12 +62,14 @@ class GeneralizedVectorIRCollection(VectorIRCollection):
         return np.sum(np.dot(powers, bool_vector))
 
     
-    def corpus_minterms(self,df0) -> Iterable[Tuple[List[bool], int]]:
+    def corpus_minterms(self, df0) -> Iterable[Tuple[List[bool], int]]:
         # different minterms of the entire corpus, returned in tuple form:
         # (minterm m_r, r)
         
         # convertir df0 a tipo booleano y eliminar las columnas duplicadas
-        df1 = (df0.astype(bool)).drop_duplicates(axis=1)
+        df1 = df0.astype(bool)
+        #df1.pd.duplicates()
+        #df1.pd.drop_duplicates()
         
         return map(
             lambda bool_doc: 
@@ -135,7 +137,8 @@ class GeneralizedVectorIRCollection(VectorIRCollection):
 
         df0 = self.cache.fullData        
         
-        df0 = self.generalizedModelModification(self,df0)
+        query = self.generalizedModelModification(query)
+        df0 = self.generalizedModelModification(df0)
 
         maxfr = df0.max()
         ni = df0.astype(bool).sum(axis=1)
@@ -144,7 +147,7 @@ class GeneralizedVectorIRCollection(VectorIRCollection):
         idf = idf.pow(-1)
         idf = np.log(idf)
 
-        df0 /= maxfr  # tf  NOTE oe gabriel xq esto no esta mal (signo de interrogacion)
+        df0 /= maxfr  #tf
 
         maxfrq = query.max()
         query /= maxfrq
