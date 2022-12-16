@@ -67,14 +67,17 @@ class VectorIRCollection(IRCollection):
 
         return sim
 
+    
+
     def get_relevances(
             self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
         query.columns.set_names('query')
-
+    
         A = .5  # Query smoother
 
         df0 = self.cache.fullData
-
+        
+        
         maxfr = df0.max()
         ni = df0.astype(bool).sum(axis=1)
         N = len(df0.columns)
@@ -82,7 +85,7 @@ class VectorIRCollection(IRCollection):
         idf = idf.pow(-1)
         idf = np.log(idf)
 
-        df0 /= maxfr  # tf
+        df0 /= maxfr  # tf 
 
         maxfrq = query.max()
         query /= maxfrq
