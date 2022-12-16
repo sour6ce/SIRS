@@ -47,7 +47,7 @@
       searchButton.disabled = true;
       loading = true;
       content.innerHTML = '<div class="spinner-border text-primary mx-auto" role="status">'
-      axios.get('http://localhost:8000/search',{
+      axios.get('http://localhost:8000/bool_model/search',{
         headers: {
           'Content-Type': 'application/json',
         },
