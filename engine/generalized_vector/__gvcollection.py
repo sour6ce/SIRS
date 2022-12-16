@@ -11,101 +11,121 @@ import math
 class GeneralizedVectorIRCollection(VectorIRCollection):
     def __init__(self):
         super().__init__()
-        self.k1 = 1.2  # Parámetro de ajuste k1
-        self.k3 = 1000  # Parámetro de ajuste k3
-        self.b = 0.75  # Parámetro de sesgo del documento
-        self.avdl = 0  # Tamaño promedio de los documentos en el corpus
 
-    def get_relevance(self, query: pd.DataFrame, doc: DOCID) -> float:
+    def get_relevance(self, query: pd.DataFrame,
+                      doc: DOCID) -> float:
+
+        # TODO: Delete or change to tf,idf
         df = self.cache.fullData
-
+        df = self.generalizedModelModification(df)
+        
         query.index.name = 'term'
         d_vec = df[df[doc] != 0][doc]  # Document related vector
+        # ds = pd.Series(data=[d for d in d_vec], index=[i for i in d_vec.index])
+        # ddf = pd.DataFrame({'doc': ds})
         d_vec.index.name = 'term'
         df = pd.concat([d_vec, query]).fillna(0).groupby('term').sum()
 
         d_vec = np.array(df[0])
         q_vec = np.array(df['query'])
 
-        doclen = len(d_vec)  # Document length
-        qtf = q_vec[0]  # Term frequency in query
+        mult = np.sum(d_vec*q_vec)  # Dot product
 
-        invdl = 1/doclen  # Inverse document length
+        n_q = sqrt(np.sum(q_vec*q_vec))  # Query vector distance
+        n_d = sqrt(np.sum(d_vec*d_vec))  # Document vector distance
 
-        # Calculate BM25 score
-        sim = (self.k1 + 1)*qtf*(self.k3 + 1)*invdl/((self.k1*((1-self.b) + self.b*doclen/self.avdl) + qtf)*(self.k3 + tf))
+        if abs(n_d) <= 1e-8:
+            return -1
+
+        sim = mult/(n_d*n_q)
 
         return sim
 
-    def generalizedModelModification(self,df0):
-        for doc in df0:
-            new_doc = [0]*len(doc)
-            for i, weight in enumerate(doc):
-                new_doc += weight * get_ki(i)
+    def generalizedModelModification(self, df0):
+        arr = np.array(df0)
+        new_arr = np.zeros(arr.shape)
+        
+        for i in range(arr.shape[1]):
+            new_arr[:, i] = np.multiply(arr[:, i], self.get_ki(i, arr))
+        
+        #update column with new_arr
+        df0[df0.columns] = new_arr
+        return new_arr
                 
-            # TODO: update column with new_doc
         
         
     
     def from_bin_to_num(bool_vector):
-        return sum(
-            (bit_activated * 2**i for i, bit_activated in enumerate(bool_vector))
-        ) 
+        bool_vector = np.array(bool_vector)
+        exponents = np.arange(len(bool_vector))
+        powers = np.power(2, exponents)
+        return np.sum(np.dot(powers, bool_vector))
+
     
     def corpus_minterms(self,df0) -> Iterable[Tuple[List[bool], int]]:
-        """
-        different minterms of the entire corpus, returned in tuple form:
-        (minterm m_r, r)
-        """
+        # different minterms of the entire corpus, returned in tuple form:
+        # (minterm m_r, r)
         
-        df1 = df0.astype(bool)
-        df1.drop(df1.columns[pd.duplicates], axis=1)
+        # convertir df0 a tipo booleano y eliminar las columnas duplicadas
+        df1 = (df0.astype(bool)).drop_duplicates(axis=1)
         
         return map(
             lambda bool_doc: 
-                (bool_doc, 1+from_bin_to_num(bool_doc)), 
+                (bool_doc, 1+ self.from_bin_to_num(bool_doc)), 
             df1
         )
         
     def doc_matches_minterm(doc, m_r):
-        for i, freq in enumerate(doc):
-            match_at_i = freq and m_r[i] or not freq and not m_r[i]
-            if not match_at_i:
-                return False
-            
-        return True
+        #Convertimos doc y m_r en arrays de numpy
+        doc_arr = np.array(doc)
+        m_r_arr = np.array(m_r)
         
-    
-    def get_correlation_factor(self,i, m_r):
+        #aplicamos XOR para ver si existe diferencia entre los arrays
+        #si existe entonces algun componente de diff sera True
+        diff = np.logical_xor(doc_arr, m_r_arr)
+        
+        return not np.any(diff)
+
+        
+    #este metodo devuelve el factor de correlacion
+    def get_correlation_factor(self, i, m_r, df0):
         """look formula in book"""
-        c_ir = 0
-        for doc in df0.columns:
-            if doc_matches_minterm(doc, m_r):
-                c_ir += df0[doc][i]
-                
-        return c_ir
-                
+        # Obtenemos un vector con todas las columnas del dataframe df0
+        doc_columns = df0.columns
         
-    def get_zeroes_vector_with_1_in(self,r, number_of_terms):
+        # Creamos un vector de booleanos que indica para cada columna si se corresponde con el término m_r
+        matches_mask = np.array([self.doc_matches_minterm(doc, m_r) for doc in doc_columns])
+        
+        # Seleccionamos solo las columnas que se corresponden con el término m_r
+        matching_columns = df0[doc_columns[matches_mask]]
+        
+        # Calculamos la suma de los valores de la fila i en las columnas seleccionadas
+        c_ir = matching_columns[i].sum()
+        
+        return c_ir
+             
+    #Este metodo genera un vector con 0 y un 1 en la posicion r
+    def get_zeroes_vector_with_1_in(self, r, number_of_terms):
         """(it falls from the tree)"""
-        vector = [0]*number_of_terms
+        vector = np.zeros(number_of_terms)
         vector[r] = 1
         return vector
     
-    def get_ki(self,i):
-        up =0
+    #este metodo genera el coeficiente de correlacion ki
+    def get_ki(self, i, df0):
+        up = np.zeros(df0.shape[1])
         down = 0
-        
-        for m_r, r in corpus_minterms(df0):
-            c_ir = get_correlation_factor(i, m_r)
-            m_r_vector = get_zeroes_vector_with_1_in(r-1)
-            
+
+        for m_r, r in self.corpus_minterms(df0):
+            c_ir = self.get_correlation_factor(i, m_r, df0)
+            m_r_vector = self.get_zeroes_vector_with_1_in(r-1, df0.shape[1])
+
             if m_r[i]:
                 up += c_ir * m_r_vector
-                down += c_ir*c_ir 
-            
-        down = math.sqrt(down)
-        
+                down += c_ir*c_ir
+
+        down = np.sqrt(down)
+
         ki = up/down
         return ki
 
@@ -113,10 +133,9 @@ class GeneralizedVectorIRCollection(VectorIRCollection):
             self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
         query.columns.set_names('query')
 
-        df0 = self.cache.fullData
+        df0 = self.cache.fullData        
         
-        
-        df0 = generalizedModelModification(self,df0)
+        df0 = self.generalizedModelModification(self,df0)
 
         maxfr = df0.max()
         ni = df0.astype(bool).sum(axis=1)
