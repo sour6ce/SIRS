@@ -66,7 +66,8 @@ app.add_middleware(
 
 @app.get('/bool_model/search')
 # Main route to queries
-async def root(q: str, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
+async def root(q: str = None, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
+    if not q: return []
     results = [irdoc_to_dto(d, BOOL_IRS)
                for d in islice(
                    BOOL_IRS.query(q),
@@ -78,9 +79,23 @@ async def get_doc(doc_id: str) -> DocumentEntry:
     return irdoc_to_dto(doc_id)
 
 @app.get('/vec_model/search')
-async def getVecIRS(q: str, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
+async def getVecIRS(q: str = None, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
+    if q is None: return []
     results = [irdoc_to_dto(d, VEC_IRS)
                for d in islice(
                    VEC_IRS.query(q),
                    (page - 1) * pagesize, pagesize * page)]
     return results
+
+@app.get('/datasets')
+async def getDatasets():
+    return [
+        {
+            'name': 'Cranfield',
+            'slug': 'cranfield',
+        },
+        {
+            'name': 'Testing Dataset',
+            'slug': 'tst-dataset',
+        },
+    ]

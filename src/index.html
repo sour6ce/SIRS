@@ -12,6 +12,8 @@
 <body>
   <header>
     <h1>Grooble</h1>
+    <div class="btn-group" role="group" aria-label="Basic radio toggle button group" id="dataset-selection">
+    </div>
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
@@ -36,56 +38,49 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script type="text/javascript" src="./index.js"></script>
   <script>
+    let currentDataset = null
+    const datasetSelection = document.getElementById('dataset-selection');
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const {data} = await baseAxios.get('/datasets');
+        data.forEach((dataset,i) => {
+          const input = document.createElement('input');
+          if(i===0) currentDataset = dataset.slug;
+          input.type = 'radio';
+          input.className = 'btn-check';
+          input.name = 'dataset';
+          input.id = dataset.slug;
+          input.value = dataset.slug;
+          input.checked = dataset.slug === currentDataset;
+          input.onchange = () => {
+            currentDataset = dataset.slug;
+          }
+          const label = document.createElement('label');
+          label.className = 'btn btn-outline-primary';
+          label.htmlFor = dataset.slug;
+          label.innerText = dataset.name;
+          datasetSelection.appendChild(input);
+          datasetSelection.appendChild(label);
+        });
+      } catch (error) {
+        console.error(error);
+        alert('Error al cargar los datasets');
+      }
+    });
+
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
     const content = document.querySelector('.content');
     let loading = false
 
-    const handleSearch = () => {
-      const query = searchInput.value;
-      searchButton.disabled = true;
-      loading = true;
-      content.innerHTML = '<div class="spinner-border text-primary mx-auto" role="status">'
-      axios.get('http://localhost:8000/bool_model/search',{
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        params:{
-          q: query
-        }
-      }).then((response) => {
-          document.title = `Grooble: ${query}`;
-          const { data } = response;
-          content.innerHTML = '';
-          data.forEach((item) => {
-            const { title, description, url } = item;
-            const card = document.createElement('div');
-            card.classList.add('card');
-            card.innerHTML = `
-              <div class="card-body">
-                <h5 class="card-title">${title}</h5>
-                <p class="card-text">${description}</p>
-              </div>
-            `;
-            content.appendChild(card);
-          });
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => {
-          searchButton.disabled = false;
-          loading = false;
-        });
-    }
-    const ev = searchButton.addEventListener('click', handleSearch);
+    const ev = searchButton.addEventListener('click', handleSearch({searchButton, searchInput, content, loading, endpoint:'/vec_model/search'}));
     const ev2 = searchInput.addEventListener('keyup', (e) => {
       if(e.key === 'Enter' && !loading){
-        handleSearch();
+        handleSearch({searchButton, searchInput, content, loading,endpoint:'/vec_model/search'});
       }
     });
-
     window.addEventListener('unload',()=>{
       searchButton.removeEventListener('click', ev);
       searchInput.removeEventListener('keyup', ev2);
