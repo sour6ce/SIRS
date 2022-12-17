@@ -1,9 +1,11 @@
 '''Cranfield Specific Implementations for IR system'''
 
+from typing import Set, Type
 from ..core import *
-from ir_datasets.datasets.cranfield import CranfieldDoc
+from ir_datasets.datasets.cranfield import CranfieldDoc, TrecQrel
 from ir_datasets.indices.base import Docstore
 from ir_datasets import load, Dataset
+from ..metrics.qrel import Qrel, QrelGetter
 
 dataset: Dataset = load('cranfield')
 
@@ -35,3 +37,36 @@ def to_rawdocument(c_doc: CranfieldDoc) -> RawDocumentData:
 class CranfieldGetter(RawDataGetter):
     def getdata(self, doc: DOCID) -> RawDocumentData:
         return to_rawdocument(docstore.get(dfx(doc)))
+
+
+class CranfieldQrelsGetter(QrelGetter):
+    def __init__(self) -> None:
+        self.__class__.queries = {str(k+1): q.text
+                                  for k, q in enumerate(dataset.queries_iter())}
+
+    @classmethod
+    def __getqtext(cls, qid: str) -> str:
+        return cls.queries[qid]
+
+    def getqrels(self) -> List[Qrel]:
+        qmarks: Set[str] = set()
+        proc_qrels: Dict[str, Qrel] = {}
+
+        for qrel in dataset.qrels_iter():
+            qrel: TrecQrel
+            
+            if qrel.relevance==-1: continue
+
+            if qrel.query_id in qmarks:
+                proc_qrels[qrel.query_id].relevants[fx(
+                    qrel.doc_id)] = (qrel.relevance)/4.0
+                continue
+
+            qmarks.add(qrel.query_id)
+            proc_qrels[qrel.query_id] = Qrel(
+                qrel.query_id,
+                self.__getqtext(qrel.query_id),
+                {qrel.doc_id: (qrel.relevance)/4.0}
+            )
+
+        return [x for x in proc_qrels.values()]

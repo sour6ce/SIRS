@@ -11,7 +11,6 @@ class VectorIRQuerifier(IRQuerifier):
         r = {}
         # Creates a dictionary indexed by terms that stores the
         # frequency of the term in the query (used as weight temporarily)
-        # TODO: Add TF x IDF
         for s in tokenize(query):
             r[s] = r.get(s, 0)+1
 

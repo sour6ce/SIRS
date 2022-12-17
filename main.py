@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from engine.cranfield import CranfieldGetter, dataset
-from engine.boolean import BooleanIRS
+from engine.vector import VectorIRS
 from engine.core import DOCID
 from datetime import datetime
 from engine.tokenizer import clean_text
@@ -25,7 +25,7 @@ class DocumentEntry(BaseModel):
 debug.setupRootLog()
 
 # Basic vector IR system
-IRS = BooleanIRS()
+IRS = VectorIRS()
 
 # Cranfield dataset load
 IRS.data_getter = CranfieldGetter()
@@ -63,3 +63,8 @@ async def root(q: str, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]
                    IRS.query(q),
                    (page - 1) * pagesize, pagesize * page)]
     return results
+
+
+@app.get('/doc/{doc_id}')
+async def get_doc(doc_id: str) -> DocumentEntry:
+    return irdoc_to_dto(doc_id)

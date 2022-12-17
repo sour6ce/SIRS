@@ -9,6 +9,9 @@ class VectorCSVCache(ICache):
   def __init__(
           self, fileName: str = '') -> None:
     super().__init__(fileName)
+    # Filter out blank documents
+    self.dataCache = self.dataCache.loc[:, (self.dataCache > 0.0).any(axis=0)]
+    self.fullData = self.fullData.loc[:, (self.dataCache > 0.0).any(axis=0)]
     
   def add_document(self, document: Tuple[DOCID, INDEX]) -> None:
     if document[0] not in self.fullData.columns:
@@ -45,6 +48,9 @@ class VectorCSVCache(ICache):
 
     new_df = pd.DataFrame({doc: ser(doc)
                           for doc in to_add_documents})
+    # Filter out blank documents
+    new_df = new_df.loc[:, (new_df > 0.0).any(axis=0)]
+    new_df.index.name = 'term'
     self.fullData = pd.concat([self.fullData, new_df]).fillna(0).sort_index()
     self.__indexes = {}
   
