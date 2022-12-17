@@ -42,7 +42,6 @@ class VectorIRCollection(IRCollection):
     def get_relevance(self, query: pd.DataFrame,
                       doc: DOCID) -> float:
 
-        # TODO: Delete or change to tf,idf
         df = self.cache.fullData
 
         query.index.name = 'term'
@@ -67,10 +66,12 @@ class VectorIRCollection(IRCollection):
 
         return sim
 
+    
+
     def get_relevances(
             self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
         query.columns.set_names('query')
-
+    
         A = .5  # Query smoother
 
         data = self.cache.fullData

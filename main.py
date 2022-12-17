@@ -13,7 +13,7 @@ from engine.tokenizer import clean_text
 from config import *
 import debug
 
-
+#TODO: add numbers to boolean model
 # Document search result DTO
 class DocumentEntry(BaseModel):
     id: str
@@ -66,8 +66,8 @@ app.add_middleware(
 
 @app.get('/bool_model/search')
 # Main route to queries
-async def root(q: str = None, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
-    if not q: return []
+async def root(q: str = "", page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
+    if len(q) == 0: return []
     results = [irdoc_to_dto(d, BOOL_IRS)
                for d in islice(
                    BOOL_IRS.query(q),
@@ -79,8 +79,8 @@ async def get_doc(doc_id: str) -> DocumentEntry:
     return irdoc_to_dto(doc_id)
 
 @app.get('/vec_model/search')
-async def getVecIRS(q: str = None, page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
-    if q is None: return []
+
+async def getVecIRS(q: str = "", page: int = 1, pagesize: int = 10) -> List[DocumentEntry]:
     results = [irdoc_to_dto(d, VEC_IRS)
                for d in islice(
                    VEC_IRS.query(q),
