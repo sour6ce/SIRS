@@ -98,3 +98,40 @@ const handleShowMore = ({
     showMoreButton.disabled = false;
   })
 }
+
+const handleGetModels = async ()=>{
+  console.log('called')
+  const content = document.getElementById('content');
+  try{
+    const res = (await baseAxios.get('/models')).data;
+    content.innerHTML = '';
+    res.forEach((item) => {
+      const { name,slug, description,link,instructions } = item;
+      const card = document.createElement('div');
+      card.classList.add('col-4');
+      card.innerHTML = `
+      <div class="card w-100 pointer">
+        <div class="card-body model-card-hover col" id="model-card-${slug}">
+          <h5 class="card-title">${name}</h5>
+          <p class="card-text fs-8 text-muted">${description}</p>
+          <ol>
+            ${instructions.reduce((acc,curr)=>{
+              return acc + `<li class="text-sm">${curr}</li>\n`;
+            },"")}
+          </ol>
+        </div>
+      </div>
+      `;
+      card.addEventListener('click',()=>{
+        handleGotoModel(link);
+      })
+      content.appendChild(card);
+    })
+  }catch(e){
+    console.log(e);
+  }
+}
+
+const handleGotoModel = (slug)=>{
+  window.location.href = `/src/${slug}`;
+}

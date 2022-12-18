@@ -94,8 +94,31 @@ async def getDatasets():
             'name': 'Cranfield',
             'slug': 'cranfield',
         },
+    ]
+    
+@app.get('/models')
+async def getModels():
+    return [
         {
-            'name': 'Testing Dataset',
-            'slug': 'tst-dataset',
+            "name": "Boolean model",
+            "slug": "bool_model",
+            "link": "./boolean.html",
+            "description": "Information Retrieval System based on boolean queries",
+            #TODO: @sour6ce - add instructions about query syntax
+            "instructions": ["Enter a query in the search bar", "Click on the search button"]
+        },
+        {
+            "name": "Vectorial model",
+            "slug": "vec_model",
+            "link": "vectorial.html",
+            "description": "Information Retrieval System based on vectorial model",
+            "instructions": ["Enter a query in the search bar", "Each keyword must be a single word", "No single numers allowed(4 now)", "Click on the search button"]
+        },
+        {
+            "name": "Generalized Vectorial model",
+            "slug": "gvec_model",
+            "link": "gen_vectorial.html",
+            "description": "Information Retrieval System based on generalized vectorial model",
+            "instructions": ["Enter a query in the search bar", "Each keyword must be a single word", "No single numers allowed(4 now)", "Click on the search button"]
         },
     ]

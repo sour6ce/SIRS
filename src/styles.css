@@ -86,3 +86,16 @@ input{
 #to-top-button i{
   font-size: 1.25rem;
 }
+
+.pointer {
+  cursor: pointer;
+}
+
+.pointer:hover {
+  /* box-shadow: 0 0 0 5px var(--bs-primary); */
+  box-shadow: 0 0 0 2px white, 0 0 0 6px var(--bs-primary);
+}
+
+.text-sm{
+  font-size: 0.875rem;
+}
