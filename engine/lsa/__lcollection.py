@@ -10,7 +10,7 @@ from ..core import DOCID, INDEX, IRS, IRCollection
 from .__lindex import LsiIndex
 
 
-class VectorIRCollection(IRCollection):
+class LsiIRCollection(IRCollection):
     index: LsiIndex = LsiIndex(name="freq")
 
     def __get_index(self, doc: DOCID) -> INDEX:
