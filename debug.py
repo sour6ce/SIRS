@@ -17,7 +17,7 @@ EXECUTION_ID = (str(datetime.now())).replace(' ', '-').replace(':', '-')
 def debugExcepSilence(f: Callable):
     def __wrapper(*args, **kwargs):
         try:
-            f(*args, **kwargs)
+            return f(*args, **kwargs)
         except Exception as e:
             logging.log(
                 logging.WARNING,
@@ -117,7 +117,7 @@ def profile(limit: int = 150):
             return f
         
         def __wrapper(*args, **kwargs):
-            profileFunc(f, f_args=args, f_kwargs=kwargs, limit=limit)
+            return profileFunc(f, f_args=args, f_kwargs=kwargs, limit=limit)
 
         return __wrapper
 
