@@ -7,7 +7,7 @@ import pandas as pd
 from ..core import DOCID
 
 class BooleanIRCollection(VectorIRCollection):
-
+    # FIXME: Boolean broken, not using new cache system
     def get_relevance(self, query: pd.DataFrame,
                       doc: DOCID) -> float:
 

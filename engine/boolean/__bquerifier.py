@@ -11,6 +11,7 @@ from sympy.logic.boolalg import And, BooleanFunction, Not, Or
 term_char_r = r"[a-zA-Z'0-9]"
 term_r = term_char_r+"+"
 
+# TODO: replace stopwords in boolean queries
 
 class Token(NamedTuple):
     value: str

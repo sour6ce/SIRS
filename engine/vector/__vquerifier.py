@@ -8,6 +8,7 @@ class VectorIRQuerifier(IRQuerifier):
     __last = None
 
     def querify(self, query: str) -> pd.DataFrame:
+        # TODO: Replace DataFrame use for dict
         r = {}
         # Creates a dictionary indexed by terms that stores the
         # frequency of the term in the query (used as weight temporarily)
