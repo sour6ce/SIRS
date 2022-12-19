@@ -4,7 +4,7 @@ from ..tokenizer import tokenize
 import pandas as pd
 import hashlib
 
-class LsaIRQuerifier(IRQuerifier):
+class LsiIRQuerifier(IRQuerifier):
     __last = None
 
     def querify(self, query: str) -> pd.DataFrame:

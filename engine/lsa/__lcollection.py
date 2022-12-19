@@ -7,11 +7,11 @@ import pandas as pd
 
 from debug import profile
 from ..core import DOCID, INDEX, IRS, IRCollection
-from .__lindex import LsaIndex
+from .__lindex import LsiIndex
 
 
 class VectorIRCollection(IRCollection):
-    index: LsaIndex = LsaIndex(name="freq")
+    index: LsiIndex = LsiIndex(name="freq")
 
     def __get_index(self, doc: DOCID) -> INDEX:
         irs: IRS = self.irs
