@@ -3,7 +3,7 @@ from ..core.cache import ICache
 import pandas as pd
 from ..core import DOCID, INDEX
 
-class LsaCSVCache(ICache):
+class LsiCSVCache(ICache):
   __indexes: Dict[DOCID, INDEX] = {}
 
   def __init__(
