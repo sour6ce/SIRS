@@ -49,8 +49,6 @@ class LsiIRCollection(IRCollection):
     def get_relevance(self, query: Dict[str, int],
                       doc: DOCID) -> float:
 
-        # TODO: Adjust for query format change
-
         A = .5  # Query smoother
 
         doc_index = self.index.term_by_doc[doc]
@@ -95,9 +93,7 @@ class LsiIRCollection(IRCollection):
         return mult/(norm_d*norm_q)
 
     def get_relevances(
-            self, query: pd.DataFrame) -> List[Tuple[DOCID, float]]:
-        query: Dict[str, int] = {term: query.loc[term]
-                                 ['query'] for term in query.index}
+            self, query: Dict[str,int]) -> List[Tuple[DOCID, float]]:
 
         r = list({doc_id: self.get_relevance(query, doc_id)
                   for doc_id in self.index.docs}.items())
