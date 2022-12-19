@@ -133,3 +133,9 @@ dmypy.json
 
 # Logs
 logs/
+*.profile
+
+# Cache
+*.bak
+*.dat
+*.dir
