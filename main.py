@@ -13,7 +13,8 @@ from engine.tokenizer import clean_text
 from config import *
 import debug
 
-#TODO: add numbers to boolean model
+# TODO: Update python docs
+
 # Document search result DTO
 class DocumentEntry(BaseModel):
     id: str
@@ -23,8 +24,9 @@ class DocumentEntry(BaseModel):
 # Basic logging configuration
 debug.setupRootLog()
 
-def irdoc_to_dto(doc: DOCID) -> DocumentEntry:
-    doc = IRS.data_getter(doc)
+
+def irdoc_to_dto(doc: DOCID, irs: IRS) -> DocumentEntry:
+    doc = irs.data_getter(doc)
     return DocumentEntry(
         id=doc.doc_id,
         title=clean_text(doc.title),
