@@ -1,14 +1,12 @@
 from itertools import islice
-from os import path
 from typing import List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from engine.cranfield import CranfieldGetter, dataset
+from engine.cranfield import CranfieldGetter as Getter
 from engine.boolean import BooleanIRS
 from engine.vector import VectorIRS
-from engine.core import DOCID,IRS
-from datetime import datetime
+from engine.core import DOCID, IRS
 from engine.tokenizer import clean_text
 from config import *
 import debug
@@ -40,19 +38,15 @@ debug.setupRootLog()
 BOOL_IRS = BooleanIRS()
 
 # Bool vector Load
-BOOL_IRS.data_getter = CranfieldGetter()
-MAX_DOCUMENTS = 2000  # Cranfield has 1400 actually
-BOOL_IRS.add_documents((d.doc_id
-                   for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
+BOOL_IRS.data_getter = Getter()
+BOOL_IRS.add_documents(BOOL_IRS.data_getter.getall())
 
 # Vector IR system
 VEC_IRS = VectorIRS()
 
 # Cranfield dataset load
-VEC_IRS.data_getter = CranfieldGetter()
-MAX_DOCUMENTS = 2000  # Cranfield has 1400 actually
-VEC_IRS.add_documents((d.doc_id
-                   for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
+VEC_IRS.data_getter = Getter()
+VEC_IRS.add_documents(VEC_IRS.data_getter.getall())
 
 # FastAPI app
 app = FastAPI(debug=DEBUG)

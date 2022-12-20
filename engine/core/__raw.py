@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import List, NamedTuple
 DOCID = str
 
 
@@ -22,6 +22,10 @@ class RawDataGetter(ABC):
 
     def __call__(self, doc: DOCID) -> RawDocumentData:
         return self.getdata(doc)
+
+    @abstractmethod
+    def getall(self) -> List[DOCID]:
+        pass
 
 
 def ifx(did: DOCID) -> bool:
