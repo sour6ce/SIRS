@@ -18,7 +18,7 @@ class Singleton(type):
         return cls._instances[cls, name]
 
 
-class LsaIndex(metaclass=Singleton):
+class LsiIndex(metaclass=Singleton):
     # Shelve config data
     index_dir: str
     name: str
