@@ -1,7 +1,7 @@
+import json
 from typing import Dict
 from ..core import IRQuerifier
 from ..tokenizer import tokenize
-import pandas as pd
 import hashlib
 
 class VectorIRQuerifier(IRQuerifier):
@@ -23,5 +23,5 @@ class VectorIRQuerifier(IRQuerifier):
             return ''
         else:
             h = hashlib.sha512()
-            h.update(frozenset(self.__last))
+            h.update(json.dumps(self.__last).encode())
             return h.hexdigest()
