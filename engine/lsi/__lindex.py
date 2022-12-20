@@ -1,8 +1,8 @@
 from math import log
 import shelve
 from os import makedirs, path
-from typing import Dict, Iterable, Set, Tuple
-
+from typing import Dict, Iterable, Set, Tuple, List
+import numpy as np
 from engine.core import DOCID, INDEX
 
 
@@ -44,6 +44,10 @@ class LsiIndex(metaclass=Singleton):
 
     doc_count: int = 0
     term_count: int = 0
+    
+    Amat: List[List[float]] = []
+    u:  List[List[float]] = []
+    s:  List[float] = []
 
     def __init__(self, *, name: str) -> None:
         self.name = name
@@ -155,3 +159,12 @@ class LsiIndex(metaclass=Singleton):
         self.persistance['idf'] = self.idf
         self.persistance['n_i'] = self.n_i
         self.persistance['whole'] = self.whole
+
+
+    def loadBlockValues(self): 
+        dbt = self.doc_by_term.keys()
+        docs = self.docs
+        self.Amat = [[((self.whole[doc, term] / self.max_freq[doc]) if term in self.term_by_doc[doc].keys() else 0)*self.idf.get(term, 0) for doc in docs] for term in dbt]
+        u,s,_ = np.linalg.svd(self.Amat, full_matrices=False)
+        self.u = u
+        self.s = s

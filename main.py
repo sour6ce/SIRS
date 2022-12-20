@@ -13,6 +13,7 @@ from datetime import datetime
 from engine.tokenizer import clean_text
 from config import *
 import debug
+from uvicorn.server import logger
 
 # TODO: Update python docs
 
@@ -25,6 +26,8 @@ class DocumentEntry(BaseModel):
 # Basic logging configuration
 debug.setupRootLog()
 
+logger.info("Service Starting...")
+logger.info("Loading data...")
 
 def irdoc_to_dto(doc: DOCID, irs: IRS) -> DocumentEntry:
     doc = irs.data_getter(doc)
@@ -45,7 +48,7 @@ BOOL_IRS = BooleanIRS()
 BOOL_IRS.data_getter = CranfieldGetter()
 BOOL_IRS.add_documents((d.doc_id
                    for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
-
+logger.info("Bool Model Loaded ...")
 # Vector IR system
 VEC_IRS = VectorIRS()
 
@@ -53,13 +56,14 @@ VEC_IRS = VectorIRS()
 VEC_IRS.data_getter = CranfieldGetter()
 VEC_IRS.add_documents((d.doc_id
                    for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
-
+logger.info("Vector Model Loaded ...")
 # LSI IR system
 LSI_IRS = LatentSemanticIRS()
 LSI_IRS.data_getter = CranfieldGetter()
 LSI_IRS.add_documents((d.doc_id
                    for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
-
+LSI_IRS.collection.index.loadBlockValues()
+logger.info("Latent Semantic Indexing Model Loaded ...")
 # FastAPI app
 app = FastAPI(debug=DEBUG)
 

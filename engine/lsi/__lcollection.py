@@ -49,30 +49,33 @@ class LsiIRCollection(IRCollection):
     def get_documents(self) -> List[DOCID]:
         return list(self.index.docs)
     
-    def get_relevance(self, query, doc: DOCID):
+    def get_relevance(self, query: Dict[str, int],
+                      doc: DOCID) -> float:
         pass
         
     def get_relevances(self,query: Dict[str,int]) -> List[Tuple[DOCID, float]]:
-        k=100
+        k=50
         dbt = self.index.doc_by_term.keys()
         docs = self.index.docs
-        Amat = [[self.get_tf(term, doc)*self.get_idf(term) for doc in docs] for term in dbt]
-        u,s,_ = np.linalg.svd(Amat, full_matrices=False)
+        Amat = self.index.Amat
+        u = self.index.u
+        s = self.index.s
         uk = u[:,:k]
         skinv = np.linalg.inv(np.diag(s[:k]))
-        
         A = 0.5
         max_q = max(query.values())
         dbt = self.index.doc_by_term.keys()
         docs = self.index.docs
-        qt =[[(A+(1-A)*(query[term]/max_q))*self.get_idf(term) for term in dbt]]
+        qt =[[(A+(1-A)*((query[term])/max_q if term in query.keys() else 0))*self.get_idf(term) for term in dbt]]
         ukskinv = np.matmul(uk,skinv)
         qk = np.matmul(qt,ukskinv)
         AmatT = np.transpose(Amat)
         Ak = [np.matmul([r],ukskinv)[0] for r in AmatT]
         res = {}
-        for i in range(len(docs)):
-            res[docs[i]] = self.sim(qk[0],Ak[i])
+        it=0
+        for doc in docs:
+            res[doc] = self.sim(qk[0],Ak[it])
+            it = it+1
             
         sorted_keys = sorted(res, key=lambda x: res[x], reverse=True)
         return [(i,res[i]) for i in sorted_keys]
