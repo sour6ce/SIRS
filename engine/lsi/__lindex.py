@@ -34,11 +34,6 @@ class LsiIndex(metaclass=Singleton):
     # Most frequent term frequency for each document
     max_freq: Dict[DOCID, int] = {}
 
-    n_i: Dict[str, int] = {}  # Amount of document that a term appears
-    idf: Dict[str, float] = {}  # idf value of the term
-
-    common: int = 0  # # of document in what appears the most common term
-
     docs: Set[DOCID] = set()  # Set of all documents in the index
     terms: Set[str] = set()  # Set of all documents in the index
 
@@ -47,6 +42,7 @@ class LsiIndex(metaclass=Singleton):
     
     Amat: List[List[float]] = []
     u:  List[List[float]] = []
+    v:  List[List[float]] = []
     s:  List[float] = []
 
     def __init__(self, *, name: str) -> None:
@@ -66,16 +62,10 @@ class LsiIndex(metaclass=Singleton):
             self.term_by_doc = self.persistance['term_by_doc']
         if 'max_freq' in self.persistance.keys():
             self.max_freq = self.persistance['max_freq']
-        if 'common' in self.persistance.keys():
-            self.common = self.persistance['common']
         if 'docs' in self.persistance.keys():
             self.docs = self.persistance['docs']
         if 'terms' in self.persistance.keys():
             self.terms = self.persistance['terms']
-        if 'idf' in self.persistance.keys():
-            self.idf = self.persistance['idf']
-        if 'n_i' in self.persistance.keys():
-            self.n_i = self.persistance['n_i']
         if 'whole' in self.persistance.keys():
             self.whole = self.persistance['whole']
 
@@ -98,11 +88,6 @@ class LsiIndex(metaclass=Singleton):
             if term not in self.doc_by_term.keys():
                 self.term_count += 1
                 self.terms.add(term)
-                self.n_i[term] = 0
-
-            # The term is new in the document
-            if term not in self.term_by_doc[id]:
-                self.n_i[term] += 1
 
             # Frequency of the term is 0+1 the old frequency or 1
             # if is the first time seen in the document
@@ -118,10 +103,6 @@ class LsiIndex(metaclass=Singleton):
             # all terms in the document
             self.max_freq[id] = max(self.max_freq[id], freq)
 
-            # Check if the amount of documents where the term appears
-            # is the maximum of the whole collection
-            self.common = max(self.n_i[term], self.common)
-
         # If max_freq still 0 it means the document was empty
         self.__dirty = self.max_freq[id] != 0
         if self.max_freq[id] != 0:
@@ -132,10 +113,6 @@ class LsiIndex(metaclass=Singleton):
             self.max_freq.pop(id)
 
             return
-
-        # Update the values of idf
-        for term in self.term_by_doc[id]:
-            self.idf[term] = log(self.common/self.n_i[term])
 
     def get_frequency(self, doc: DOCID, term: str):
         return self.whole[doc, term]
@@ -153,18 +130,16 @@ class LsiIndex(metaclass=Singleton):
         self.persistance['doc_by_term'] = self.doc_by_term
         self.persistance['term_by_doc'] = self.term_by_doc
         self.persistance['max_freq'] = self.max_freq
-        self.persistance['common'] = self.common
         self.persistance['docs'] = self.docs
         self.persistance['terms'] = self.terms
-        self.persistance['idf'] = self.idf
-        self.persistance['n_i'] = self.n_i
         self.persistance['whole'] = self.whole
 
 
     def loadBlockValues(self): 
         dbt = self.doc_by_term.keys()
         docs = self.docs
-        self.Amat = [[((self.whole[doc, term] / self.max_freq[doc]) if term in self.term_by_doc[doc].keys() else 0)*self.idf.get(term, 0) for doc in docs] for term in dbt]
-        u,s,_ = np.linalg.svd(self.Amat, full_matrices=False)
+        self.Amat = [[(self.whole[doc, term] if term in self.term_by_doc[doc].keys() else 0) for doc in docs] for term in dbt]
+        u,s,vh = np.linalg.svd(self.Amat, full_matrices=False)
         self.u = u
         self.s = s
+        self.v = np.transpose(vh)
