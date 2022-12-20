@@ -48,6 +48,9 @@ class LsiIRCollection(IRCollection):
 
     def get_documents(self) -> List[DOCID]:
         return list(self.index.docs)
+    
+    def get_relevance(self, query, doc: DOCID):
+        pass
         
     def get_relevances(self,query: Dict[str,int]) -> List[Tuple[DOCID, float]]:
         k=100

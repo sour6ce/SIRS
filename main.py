@@ -96,7 +96,7 @@ async def getVecIRS(q: str = "", page: int = 1, pagesize: int = 10) -> List[Docu
     return results
 
 
-@app.get('lsi_model/search')
+@app.get('/lsi_model/search')
 async def getLsiIRS(q:str="",page: int = 1, pagesize: int = 10)-> List[DocumentEntry]:
     results = [irdoc_to_dto(d,LSI_IRS)
                for d in islice(
