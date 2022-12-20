@@ -16,6 +16,9 @@ class IRS():
     __querifier: IRQuerifier
     __data_getter: RawDataGetter
 
+    # Documents with a relevance equal or less than this are not showed in ranking
+    RELEVANCE_FILTER: float = .0
+
     # Buffer to store results of a query
     _query_buffer: Dict[str, List[Tuple[DOCID, float]]] = {}
 
@@ -71,7 +74,8 @@ class IRS():
         r = self.pre_query(q)
 
         # Filter relevance >=0
-        n_index = next((i for i, (_, rel) in enumerate(r) if rel <= .0), len(r))
+        n_index = next((i for i, (_, rel) in enumerate(
+            r) if rel <= self.RELEVANCE_FILTER), len(r))
         rank = [d for d, _ in islice(r, n_index)]
 
         return rank
