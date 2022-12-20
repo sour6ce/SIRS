@@ -57,9 +57,8 @@ logger.info("Vector Model Loaded ...")
 
 # LSI IR system
 LSI_IRS = LatentSemanticIRS()
-LSI_IRS.data_getter = CranfieldGetter()
-LSI_IRS.add_documents((d.doc_id
-                   for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
+LSI_IRS.data_getter = Getter()
+LSI_IRS.add_documents(LSI_IRS.data_getter.getall())
 LSI_IRS.collection.index.loadBlockValues()
 logger.info("Latent Semantic Indexing Model Loaded ...")
 
