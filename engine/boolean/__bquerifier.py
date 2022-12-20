@@ -1,12 +1,14 @@
 import hashlib
+import json
 import re
-from typing import Any, Iterable, List, NamedTuple, Tuple
+from typing import Dict, Iterable, List, NamedTuple, Set, Tuple
 
-import pandas as pd
 import sympy
 from engine.core import IRQuerifier
-from sympy import Symbol, sympify
-from sympy.logic.boolalg import And, BooleanFunction, Not, Or
+from sympy import Symbol
+from sympy.logic.boolalg import And, BooleanAtom, BooleanFunction, Not, Or
+
+from ..stopwords import STOPWORDS
 
 term_char_r = r"[a-zA-Z'0-9]"
 term_r = term_char_r+"+"
@@ -44,6 +46,8 @@ class BooleanLexer:
 
 
 class BooleanParser:
+    ParserAtom = BooleanFunction | BooleanAtom | Symbol
+
     index = -1
     token_chain: List[Token]
 
@@ -65,12 +69,12 @@ class BooleanParser:
             raise BooleanError(
                 f"Unexpected token in position: {token.position}, got {token.value}")
 
-    def __parse_S(self) -> BooleanFunction | Symbol:
+    def __parse_S(self) -> ParserAtom:
         e = self.__parse_E()
         self.validate_token(self.lookahead(), 'eof')
         return e
 
-    def __parse_E(self) -> BooleanFunction | Symbol:
+    def __parse_E(self) -> ParserAtom:
         self.validate_token(self.lookahead(), ['op', 'term', 'neg'])
         T = self.__parse_T()
         x = self.__parse_X()
@@ -79,7 +83,7 @@ class BooleanParser:
         else:
             return x[0](T, x[1])
 
-    def __parse_T(self) -> BooleanFunction | Symbol:
+    def __parse_T(self) -> ParserAtom:
         lk = self.lookahead()
         self.validate_token(lk, ['op', 'term', 'neg'])
         if lk.type == 'neg':
@@ -90,11 +94,13 @@ class BooleanParser:
             f = self.__parse_F()
             return f
 
-    def __parse_F(self) -> BooleanFunction | Symbol:
+    def __parse_F(self) -> ParserAtom:
         lk = self.lookahead()
         self.validate_token(lk, ['op', 'term'])
         if lk.type == 'term':
             self.index += 1
+            if lk.value in STOPWORDS:
+                return sympy.true
             return Symbol(lk.value)
         if lk.type == 'op':
             self.index += 1
@@ -104,7 +110,7 @@ class BooleanParser:
             self.index += 1
             return e
 
-    def __parse_X(self) -> Tuple[BooleanFunction, BooleanFunction | Symbol] | None:
+    def __parse_X(self) -> Tuple[BooleanFunction, ParserAtom] | None:
         lk = self.lookahead()
         if lk.type == 'and':
             self.index += 1
@@ -118,8 +124,8 @@ class BooleanParser:
             return (func, e)
         elif lk.type in ['op', 'term', 'neg']:
             func = And
-            t = self.__parse_T()
-            return (func, t)
+            e = self.__parse_E()
+            return (func, e)
         return None
 
     def parse(self) -> BooleanFunction | Symbol:
@@ -130,85 +136,68 @@ class BooleanParser:
 class BooleanIRQuerifier(IRQuerifier):
     __last = None
 
-    def querify(self, query: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        # convert a string to a sympy structure
-        # def __insertAnd(match: re.Match[query]):
-        #     return ' & '.join(match.groups())
-        # query = query.lower()
-        # query = re.compile(r"([a-zA-Z'0-9])\s+(\(|~)").sub(__insertAnd, query)
-        # query = re.compile(r"(\))s+([a-zA-Z'0-9])").sub(__insertAnd, query)
-        # query = re.compile(
-        #     r"([a-zA-z'0-9])\s+([a-zA-z'0-9])").sub(__insertAnd, query)
-        # st = sympify(query, evaluate=False)
+    def querify(self, query: str) -> List[Dict[str, bool]]:
+        # The object used as query is a list of AND-only queries that
+        # are joined by ORs. Each AND-only query is a Set of tuples
+        # representing a term (first element of each tuple) and if the
+        # term is in negative form or not (True or False respectively as
+        # second element of the tuple)
+
+        # Initialize parse
         bl = BooleanLexer()
-        bp = BooleanParser(bl.lex(query))
-        st = bp.parse()
+        bp = BooleanParser(bl.lex(query.lower()))
+
+        st = bp.parse()  # Gives a sympy boolean expression
+
+        # Simplifies boolean expression
         simplification = (
             sympy.logic.boolalg.simplify_logic(
                 st, form='dnf', force=True))
+
         queries = []
+
+        # It may be a simple AND-only query
         if (not isinstance(simplification, sympy.logic.Or)):
             queries = [simplification]
         else:
-            queries = (sympy.logic.boolalg.simplify_logic(
-                st, form='dnf', force=True)).args
-        q_sym1 = [
-            list(set(
-                str(q)
-                .replace('(',' ')
-                .replace(')',' ')
-                .replace('~',' ')
-                .replace('|',' ')
-                .replace('&',' ')
-                .split()
-                )) for q in queries]
-        
-        q_sym2 = [
+            queries = simplification.args
+
+        # For each AND-only query extract the
+        q_syms = [
             list(
-                str(q)
-                .replace('(',' ')
-                .replace(')',' ')
-                .replace('|',' ')
-                .replace('&',' ')
+                str(q)  # Use the simplifications as str
+                .replace('(', ' ')
+                .replace(')', ' ')
+                .replace('|', ' ')
+                .replace('&', ' ')
                 .replace('~', ' ~ ')
                 .split()
             ) for q in queries]
-           
-        #query data frame
-        #mascara de bits :'v
-        q_df_bm = [pd.DataFrame({'query': pd.Series(data=[1]*len(q) ,index=q)}) for q in q_sym1]
-        for q in q_df_bm:
-            q.sort_index(inplace=True)
-            q.index.name = 'term'
-        
-        #vector aparicion de palabras
-        q_df=[]
-        #me quito los terminos negativos
-        q_sym3 = []
-        for i in range(0,len(q_sym2)):
-            q_dict = {}
-            for j in range(0, len(q_sym2[i])):
-                if q_sym2[i][j] =='~': continue
-                if j>0 and q_sym2[i][j-1]=='~': continue
-                else:
-                    q_dict[(q_sym2[i][j])] = 1
-            q_sym3.append(q_dict.keys())
-        
-        q_df = [pd.DataFrame({'query': pd.Series(data=[1]*len(q) ,index=q)}) for q in q_sym3]
-        for q in q_df:
-            q.sort_index(inplace=True)
-            q.index.name = 'term'
-        
-        self.__last = (q_df, q_df_bm)
 
-        return (q_df, q_df_bm)
+        and_only_queries = []
+
+        # For each AND-only query get the values used and if they have a
+        # negation operator before (are in negative)
+        for query in q_syms:
+            and_values: Dict[str, bool] = {}
+            for j in range(0, len(query)):
+                if query[j] == '~':
+                    # Skip negative operator
+                    continue
+                if j > 0 and query[j-1] == '~':  # Has a negative before
+                    and_values[query[j]] = True
+                else:
+                    and_values[query[j]] = False
+            and_only_queries.append(and_values)
+
+        self.__last = and_only_queries
+
+        return and_only_queries
 
     def get_hash(self) -> str:
         if self.__last is None:
             return ''
         else:
             h = hashlib.sha512()
-            for q0, qbm in zip(self.__last[0], self.__last[1]):
-                h.update(pd.util.hash_pandas_object(q0).values)
-                h.update(pd.util.hash_pandas_object(qbm).values)
+            h.update(json.dumps(self.__last).encode())
             return h.hexdigest()

@@ -5,7 +5,7 @@ from utils import *
 
 class BooleanQueryTest(TestCase):
     def test_strict_exp_parse(self):
-        exp = 'thermodynamic & (fluids | solids)'
+        exp = 'the fluid motion'
 
         qrf = BooleanIRQuerifier()
 
@@ -18,68 +18,24 @@ class BooleanQueryTest(TestCase):
 
         r = qrf(exp)
 
-        qtest0 = ['thermodynamic', 'fluids']
-        qtest1 = ['thermodynamic', 'solids']
+        qtest0 = {('thermodynamic', False), ('fluids', False)}
+        qtest1 = {('thermodynamic', False), ('solids', False)}
 
-        match_dataframe(
-            self, r[0][0]['query'],
-            indexes=qtest0,
-            values=(1 for _ in qtest0),
-            strict=True
-        )
-        match_dataframe(
-            self, r[1][0]['query'],
-            indexes=qtest0,
-            values=(1 for _ in qtest0),
-            strict=True
-        )
-        match_dataframe(
-            self, r[0][1]['query'],
-            indexes=qtest1,
-            values=(1 for _ in qtest1),
-            strict=True
-        )
-        match_dataframe(
-            self, r[1][1]['query'],
-            indexes=qtest1,
-            values=(1 for _ in qtest1),
-            strict=True
-        )
+        self.assertSetEqual(qtest0, r[0])
+        self.assertSetEqual(qtest1, r[1])
 
     def test_complex_exp1(self):
-        exp = 'thermodynamic (fluids | solids)'
+        exp = 'the thermodynamic (fluids | solids)'
 
         qrf = BooleanIRQuerifier()
 
         r = qrf(exp)
 
-        qtest0 = ['thermodynamic', 'fluids']
-        qtest1 = ['thermodynamic', 'solids']
+        qtest0 = {('thermodynamic', False), ('fluids', False)}
+        qtest1 = {('thermodynamic', False), ('solids', False)}
 
-        match_dataframe(
-            self, r[0][0]['query'],
-            indexes=qtest0,
-            values=(1 for _ in qtest0),
-            strict=True
-        )
-        match_dataframe(
-            self, r[1][0]['query'],
-            indexes=qtest0,
-            values=(1 for _ in qtest0),
-            strict=True
-        )
-        match_dataframe(
-            self, r[0][1]['query'],
-            indexes=qtest1,
-            values=(1 for _ in qtest1),
-            strict=True
-        )
-        match_dataframe(
-            self, r[1][1]['query'],
-            indexes=qtest1,
-            values=(1 for _ in qtest1),
-            strict=True
-        )
+        self.assertSetEqual(qtest0, r[0])
+        self.assertSetEqual(qtest1, r[1])
 
     def test_complex_exp2(self):
         exp = 'thermodynamic ~fluids'
@@ -88,18 +44,6 @@ class BooleanQueryTest(TestCase):
 
         r = qrf(exp)
 
-        qtest0 = ['thermodynamic']
-        qtest1 = ['thermodynamic', 'fluids']
+        qtest0 = {('thermodynamic', False), ('fluids', True)}
 
-        match_dataframe(
-            self,
-            r[0][0]['query'],
-            indexes=qtest0,
-            strict=True
-        )
-        match_dataframe(
-            self,
-            r[1][0]['query'],
-            indexes=qtest1,
-            strict=True
-        )
+        self.assertSetEqual(qtest0, r[0])
