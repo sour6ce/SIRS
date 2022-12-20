@@ -129,10 +129,6 @@ class VectorIndex(metaclass=Singleton):
 
             return
 
-        # Update the values of idf
-        for term in self.term_by_doc[id]:
-            self.idf[term] = log(self.common/self.n_i[term])
-
     def get_frequency(self, doc: DOCID, term: str):
         return self.whole[doc, term]
 
@@ -145,6 +141,9 @@ class VectorIndex(metaclass=Singleton):
     def update_cache(self):
         if not self.__dirty:
             return
+
+        for term in self.terms:
+            self.idf[term] = log(self.common+1/self.n_i[term])
 
         self.persistance['doc_by_term'] = self.doc_by_term
         self.persistance['term_by_doc'] = self.term_by_doc
