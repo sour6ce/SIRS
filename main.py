@@ -6,10 +6,13 @@ from pydantic import BaseModel
 from engine.cranfield import CranfieldGetter as Getter
 from engine.boolean import BooleanIRS
 from engine.vector import VectorIRS
-from engine.core import DOCID, IRS
+from engine.lsi import LatentSemanticIRS
+from engine.core import DOCID,IRS
+from datetime import datetime
 from engine.tokenizer import clean_text
 from config import *
 import debug
+from uvicorn.server import logger
 
 # TODO: Update python docs
 
@@ -22,6 +25,8 @@ class DocumentEntry(BaseModel):
 # Basic logging configuration
 debug.setupRootLog()
 
+logger.info("Service Starting...")
+logger.info("Loading data...")
 
 def irdoc_to_dto(doc: DOCID, irs: IRS) -> DocumentEntry:
     doc = irs.data_getter(doc)
@@ -33,6 +38,7 @@ def irdoc_to_dto(doc: DOCID, irs: IRS) -> DocumentEntry:
 
 # Basic logging configuration
 debug.setupRootLog()
+MAX_DOCUMENTS = 2000  # Cranfield has 1400 actually
 
 # Boolean IR system
 BOOL_IRS = BooleanIRS()
@@ -40,13 +46,22 @@ BOOL_IRS = BooleanIRS()
 # Bool vector Load
 BOOL_IRS.data_getter = Getter()
 BOOL_IRS.add_documents(BOOL_IRS.data_getter.getall())
-
+logger.info("Bool Model Loaded ...")
 # Vector IR system
 VEC_IRS = VectorIRS()
 
 # Cranfield dataset load
 VEC_IRS.data_getter = Getter()
 VEC_IRS.add_documents(VEC_IRS.data_getter.getall())
+logger.info("Vector Model Loaded ...")
+
+# LSI IR system
+LSI_IRS = LatentSemanticIRS()
+LSI_IRS.data_getter = CranfieldGetter()
+LSI_IRS.add_documents((d.doc_id
+                   for d in islice(dataset.docs_iter(), MAX_DOCUMENTS)))
+LSI_IRS.collection.index.loadBlockValues()
+logger.info("Latent Semantic Indexing Model Loaded ...")
 
 # FastAPI app
 app = FastAPI(debug=DEBUG)
@@ -83,6 +98,16 @@ async def getVecIRS(q: str = "", page: int = 1, pagesize: int = 10) -> List[Docu
                    (page - 1) * pagesize, pagesize * page)]
     return results
 
+
+@app.get('/lsi_model/search')
+async def getLsiIRS(q:str="",page: int = 1, pagesize: int = 10)-> List[DocumentEntry]:
+    results = [irdoc_to_dto(d,LSI_IRS)
+               for d in islice(
+                   LSI_IRS.query(q),
+                   (page - 1) * pagesize, pagesize * page
+               )]
+    return results
+
 @app.get('/datasets')
 async def getDatasets():
     return [
@@ -111,10 +136,10 @@ async def getModels():
             "instructions": ["Enter a query in the search bar", "Each keyword must be a single word", "No single numers allowed(4 now)", "Click on the search button"]
         },
         {
-            "name": "Generalized Vectorial model",
-            "slug": "gvec_model",
-            "link": "gen_vectorial.html",
-            "description": "Information Retrieval System based on generalized vectorial model",
+            "name": "Latent Semantic Index model",
+            "slug": "lsi_model",
+            "link": "lsi.html",
+            "description": "Information Retrieval System based on Latent Semantic Index model",
             "instructions": ["Enter a query in the search bar", "Each keyword must be a single word", "No single numers allowed(4 now)", "Click on the search button"]
         },
     ]
