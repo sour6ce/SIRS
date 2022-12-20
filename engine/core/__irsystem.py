@@ -1,9 +1,10 @@
 from itertools import islice
 from typing import Any, Dict, Iterable, List, Tuple
 from .__ircollection import IRCollection
-from .__irindexer import IRIndexer
+from .__irindexer import IRIndexer, INDEX
 from .__raw import RawDataGetter, DOCID, fx
 from .__irquerifier import IRQuerifier
+from .__raw import dfx
 
 
 class IRS():
@@ -64,6 +65,11 @@ class IRS():
         coll.add_documents([fx(d) for d in list(docs)])
         self._query_buffer.clear()
 
+    def index_doc(self, doc: DOCID) -> INDEX:
+        rd = self.data_getter(dfx(doc))
+        ind = self.indexer(rd)
+        return ind
+
     def query(self, q: str) -> List[DOCID]:
         '''
         Get a ranking of documents from a query as a text.
@@ -91,7 +97,8 @@ class IRS():
             r = self._query_buffer[q_hash]
         else:
             # Calculates relevance of all documents
-            r = self.collection.get_relevances(proc_q)
+            r = [(dfx(id), r)
+                 for id, r in self.collection.get_relevances(proc_q)]
             # Update the buffer
             self._query_buffer[q_hash] = r
         return r

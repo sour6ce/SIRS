@@ -13,19 +13,13 @@ from .__vindex import VectorIndex
 class VectorIRCollection(IRCollection):
     index: VectorIndex = VectorIndex(name="freq")
 
-    def __get_index(self, doc: DOCID) -> INDEX:
-        irs: IRS = self.irs
-        rd = irs.data_getter(doc)
-        ind = irs.indexer(rd)
-        return ind
-
     def add_document(self, document: DOCID) -> None:
-        self.index.add_document(document, self.__get_index(document))
+        self.index.add_document(document, self.irs.index_doc(document))
         self.index.update_cache()
 
     def add_documents(self, documents: Iterable[DOCID]) -> None:
         for doc in documents:
-            self.index.add_document(doc, self.__get_index(doc))
+            self.index.add_document(doc, self.irs.index_doc(doc))
         self.index.update_cache()
 
     def get_tf(self, term: str, doc: DOCID):

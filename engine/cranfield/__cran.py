@@ -37,6 +37,9 @@ def to_rawdocument(c_doc: CranfieldDoc) -> RawDocumentData:
 class CranfieldGetter(RawDataGetter):
     def getdata(self, doc: DOCID) -> RawDocumentData:
         return to_rawdocument(docstore.get(dfx(doc)))
+    
+    def getall(self) -> List[DOCID]:
+        return [d.doc_id for d in dataset.docs_iter()]
 
 
 class CranfieldQrelsGetter(QrelGetter):
