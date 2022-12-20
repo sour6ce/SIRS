@@ -110,13 +110,13 @@ class SetBasedMetric(IRSMetric, ABC):
 class PrecisionMetric(SetBasedMetric):
     @staticmethod
     def formula(si: Dict[str, int]) -> float:
-        return si['RR']/si['REC']
+        return 1.0 if si['REC'] == 0 else si['RR']/si['REC']
 
 
 class RecoveryMetric(SetBasedMetric):
     @staticmethod
     def formula(si: Dict[str, int]) -> float:
-        return si['RR']/si['REL']
+        return 1.0 if si['REL'] == 0 else si['RR']/si['REL']
 
 
 class FMetric(SetBasedMetric, ABC):
@@ -130,12 +130,11 @@ def FMetricBuild(beta: float) -> Type[FMetric]:
     class _FMetric(FMetric):
         @staticmethod
         def formula(set_info: Dict[str, int]) -> float:
-            return (1+beta**2) / \
-                (
-                (1/PrecisionMetric.formula(set_info))
-                +
-                (beta**2/RecoveryMetric.formula(set_info))
-            )
+            prec = PrecisionMetric.formula(set_info)
+            rec = RecoveryMetric.formula(set_info)
+            if prec == 0 or rec == 0:
+                return .0
+            return (1+beta**2) / ((1/prec)+(beta**2/rec))
 
     return _FMetric
 
