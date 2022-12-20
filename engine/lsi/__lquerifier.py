@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 from ..core import IRQuerifier
 from ..tokenizer import tokenize
@@ -23,5 +24,5 @@ class LsiIRQuerifier(IRQuerifier):
             return ''
         else:
             h = hashlib.sha512()
-            h.update(frozenset(self.__last))
+            h.update(json.dumps(self.__last).encode())
             return h.hexdigest()
