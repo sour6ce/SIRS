@@ -11,7 +11,7 @@
 </head>
 <body>
   <header>
-    <h1>Generalized Vectorial Model</h1>
+    <h1>Latent Semantic</h1>
     <div class="btn-group" role="group" aria-label="Basic radio toggle button group" id="dataset-selection">
     </div>
     <nav>
@@ -86,13 +86,13 @@
     const showMoreButton = document.getElementById('show-more-button');
     let loading = false
 
-    const ev = searchButton.addEventListener('click', ()=>handleSearch({pageData,searchButton, searchInput, content, loading, endpoint:'/genvec_model/search',showMoreButton}));
+    const ev = searchButton.addEventListener('click', ()=>handleSearch({pageData,searchButton, searchInput, content, loading, endpoint:'/lsi_model/search',showMoreButton}));
     const ev2 = searchInput.addEventListener('keyup', (e) => {
       if(e.key === 'Enter' && !loading){
-        handleSearch({pageData,searchButton, searchInput, content, loading,endpoint:'/genvec_model/search',showMoreButton});
+        handleSearch({pageData,searchButton, searchInput, content, loading,endpoint:'/lsi_model/search',showMoreButton});
       }
     });
-    const ev3 = showMoreButton.addEventListener('click', ()=>handleShowMore({pageData,searchButton, searchInput, content,endpoint:'/genvec_model/search',showMoreButton}));
+    const ev3 = showMoreButton.addEventListener('click', ()=>handleShowMore({pageData,searchButton, searchInput, content,endpoint:'/lsi_model/search',showMoreButton}));
     window.addEventListener('unload',()=>{
       console.log('unload')
       searchButton.removeEventListener('click', ev);
