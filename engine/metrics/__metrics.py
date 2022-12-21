@@ -44,24 +44,19 @@ class SetBasedMetric(IRSMetric, ABC):
     - IRR: Not relevant documents in the query
     - NREC: Not recovered documents in the query
 
-    This metrics has two common parameters. As the similitude and the relevance
-    are floating point values in the ranges [`-1`,`1`] and [`0`,`1`]
-    respectively, two threshold values are defined as constructor parameters:
-
-    - `recovery_threshold` (default `0.0001`): Used to define what is the
-    minimum similitude value to have a document with the query to be considered
-    as recovered.
-    - `relevant_threshold` (default `0.4`): Used to define what is the
+    This metrics has one common parameters. As the relevance
+    is a floating point value in the range `0`,`1`] a threshold value
+    is defined as constructor parameter.
+    
+    `relevant_threshold` (default `0.4`): Used to define what is the
     minimum relevance value to have a document in the qrels to be considered
     as relevant.
     '''
 
     def __init__(self, *,
-                 recovery_threshold: float = .0,
                  relevant_threshold: float = .4,
                  **kwargs
                  ) -> None:
-        self.__rec_t = recovery_threshold
         self.__rel_t = relevant_threshold
 
         super().__init__()
@@ -82,7 +77,7 @@ class SetBasedMetric(IRSMetric, ABC):
         relevant: Set[DOCID] = set()
 
         for did, sim in irs.pre_query(qrel.query):
-            if sim > self.__rec_t:
+            if sim > irs.RELEVANCE_FILTER:
                 recovered.add(dfx(did))
 
         for did, rel in qrel.relevants.items():
