@@ -9,7 +9,11 @@ from datetime import datetime
 from os import path
 from typing import Any, Callable, Dict, Iterable
 
-from config import *
+DEBUG = True
+
+LOG_DIR = None  # None to use default
+
+PROFILE_DIR = None  # None to use default
 
 EXECUTION_ID = (str(datetime.now())).replace(' ', '-').replace(':', '-')
 

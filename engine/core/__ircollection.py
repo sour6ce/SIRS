@@ -37,7 +37,7 @@ class IRCollection(ABC):
 
     @abstractmethod
     def get_relevance(self, query: Any,
-                      doc: DOCID) -> Any:
+                      doc: DOCID) -> float:
         '''
         Method to get a relevance object from a
         query with a given `IRDocument` of the system.
