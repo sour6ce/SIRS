@@ -37,9 +37,9 @@ En este trabajo se desea implementar un sistema que agrupe distintos subsistemas
 ## Modelos Implementados
 
 Basado en lo estudiado durante el curso, en el contenido de la bibliografía fundamental para la asignatura$^{[1]}$ y en los requerimientos dados en la orientación se decidieron implementar los siguientes modelos:
-+ Modelo Vectorial
-+ Modelo Booleano
-+ Modelo de Semántica Latente
++ Modelo Vectorial.
++ Modelo Booleano.
++ Modelo de Semántica Latente.
 
 El modelo vectorial es un modelo clásico que se conoce que da por lo general muy buenos resultados a pesar de su simplicidad, por eso era una elección obvia su implementación.
 
@@ -59,30 +59,39 @@ Cada subsistema es una clase que hereda de `engine.core.IRS` y contiene 4 compon
 
 ### Modelo Vectorial
 
-+ Interpretación de la consulta
-+ Cálculo de relevancia
+El `querifier` del modelo vectorial recibe la consulta, la envía al `indexer` para obtener la lista de palabras y luego transforma esta en un diccionario donde la llave es el término y el valor la frecuencia.
+
+En este modelo se utiliza una tabla dispersa para saber la frecuencia de los términos en los documentos, un diccionario de diccionarios donde las combinaciones de llaves que no existen es porque los términos no se encuentran en el documento.
+
+El cálculo de la relevancia en el objeto `collection` se basa en la fórmula $tf \times idf$ y se sustituye la frecuencia de los términos por el peso obtenido por este cálculo, de igual manera la consulta se utiliza la misma fórmula con un factor de suavizado $a$ de $0.5$. Algunos de los valores de la fórmula están previamente calculados para acelerar el proceso.
+
+Teniendo los pesos en lugar de las frecuencias se pasa entonces a calcular el ángulo entre vectores. Esto se hace dividiendo la sumatoria de los pesos de los términos en común entre la query y la consulta multiplicados, sobre la multiplicación de la norma de ambos. La norma se calcula sumando los cuadrados de todos los términos en la query o el documento para calcular la norma de la query o el documento respectivamente y luego se halla la raíz cuadrada de estos.
 
 ### Modelo Booleano
 
-+ Interpretación de la consulta
-    + Formato especial permitido en las consulta booleanas (uso de ~, & y |)
-    + Ejemplo de queries y utilidad de este sistema
-+ Cálculo de relevancia
+El `querifier` del modelo booleano intenta leer una expresión booleana, es decir una serie de operaciones AND (operador &), OR (operador |) o NEG (operador ~). Cada término que aparece en la expresión es un predicado que es verdadero si el término está en el documento. Además en la expresión se permiten paréntesis para agrupar y se consideran los términos uno a continuación del otro como si estuvieran bajo una operación AND.
+
+El formato de esta consulta te permite alcanzar un nivel de precisión en la consulta muy alto según el conocimiento del usuario. Por ejemplo un usuario con experiencia podría saber que al buscar por un término *"a"* se recuperan muchos términos con documento *"b"* que no son los que se desean, entonces una consulta *"a & ~b"* daría muy buenos resultados.
+
+Para que el sistema entienda estas expresiones booleanas se *parsean* con un parser LL(1) y se utilizan los nodos de expresiones booleanas de la librería sympy. Una vez se tiene la expresión esta se reduce a una forma normal disyuntiva, es decir una serie de consultas de solo operaciones AND y NEG simples unidas por operaciones OR.
+
+Una vez se tiene esta información la relevancia en el objeto `collection` se define de la siguiente forma:
+
+    Un documento es relevante o tiene relevancia 1 si al menos una de las consultas de solo AND se satisface para ese documento.
+  
+De esta forma, se comprueba con cada consulta de solo AND si los términos que deben aparecer están y los que no no aparecen. Si el documento se satisface con alguna su relevancia será uno, sino cero.
 
 ### Modelo de Semántica Latente
 
-+ El procesamiento de la consulta se hace de la misma forma que en el modelo vectorial
-+ El modelo de semantica latente tiene como base una matriz $\Alpha$ de terminos $W_{i,j}$ donde $W_{i,j}$ es la cantidad de veces que aparece el termino $i$ en el documento $j$ y  se basa en la reduccion de la dimension del espacio vectorial que contiene a los vectores de consultas y documentos.
-+ Luego se descompone la matriz $\Alpha = U \cdot S \cdot V^{T}$ usando el algoritmo SVD y se truncan las matrices $U$ y $V$ dejando solo k columnas (k es un numero arbitrario que segun nuestras investigaciones suele situarse alrededor de 100).
-+ Luego se procede a recalcular los vectores de documentos y la consulta ajustandolos a la nueva dimension del espacio (k).
-+ Se procede al calcular la similitud entre la consulta y los documentos modificados y se ordena en ranking de los resultados de calcular la similitud. 
+El `querifier` es exactamente el mismo del modelo vectorial.
 
-  $sim(q_{k},d_{ki})=\frac{ q_{k} \cdot d_{ki} }{ |q_{k}| |d_{ki}| }$ 
+Este modelo tiene como base una matriz $\Alpha$ de terminos $W_{i,j}$ donde $W_{i,j}$ es la cantidad de veces que aparece el termino $i$ en el documento $j$ y  se basa en la reducción de la dimension del espacio vectorial que contiene a los vectores de consultas y documentos.
 
-**NOTA**:
+La matriz $\Alpha$ se descompone de la forma $\Alpha = U \cdot S \cdot V^{T}$ usando el algoritmo SVD y se truncan las matrices $U$ y $V$ dejando solo k columnas (k es un numero arbitrario que según nuestras investigaciones suele situarse alrededor de 100). Luego se procede a recalcular los vectores de documentos y la consulta ajustándolos a la nueva dimension del espacio (k).
 
-El modelo de semantica latente al reducir la dimension del espacion analiza conceptos que pueden estar "latentes", relacionar sinonimos o palabras que se usan en el mismo contexto como por ejemplo "wing" con "aeronautic". 
+Luego de realizar este proceso el modelo se comporta nuevamente como un modelo vectorial esta vez calculando la similitud según la fórmula original a partir de los vectores.
 
+$$sim(q_{k},d_{ki})=\frac{ q_{k} \cdot d_{ki} }{ |q_{k}| |d_{ki}| }$$
 
 ## Características (*Features*) del proyecto
 
