@@ -85,7 +85,7 @@ De esta forma, se comprueba con cada consulta de solo AND si los términos que d
 
 El `querifier` es exactamente el mismo del modelo vectorial.
 
-Este modelo tiene como base una matriz $\Alpha$ de terminos $W_{i,j}$ donde $W_{i,j}$ es la cantidad de veces que aparece el termino $i$ en el documento $j$ y  se basa en la reducción de la dimension del espacio vectorial que contiene a los vectores de consultas y documentos.
+Este modelo tiene como base una matriz $\Alpha$ de términos $W_{i,j}$ donde $W_{i,j}$ es la cantidad de veces que aparece el termino $i$ en el documento $j$ y  se basa en la reducción de la dimension del espacio vectorial que contiene a los vectores de consultas y documentos.
 
 La matriz $\Alpha$ se descompone de la forma $\Alpha = U \cdot S \cdot V^{T}$ usando el algoritmo SVD y se truncan las matrices $U$ y $V$ dejando solo k columnas (k es un numero arbitrario que según nuestras investigaciones suele situarse alrededor de 100). Luego se procede a recalcular los vectores de documentos y la consulta ajustándolos a la nueva dimension del espacio (k).
 
@@ -188,7 +188,7 @@ Al modificar se debe añadir la entrada del nuevo modelo especificando cada camp
 + De `collection` se deben definir los métodos:
   +  `add_document(self, document: DOCID) -> None` y `add_documents(self, documents: Iterable[DOCID]) -> None` permiten añadir documentos a la colección a partir del id de estos, la colección es la responsable de revisar el estado de estos y llamar al indexer del irs en el que se encuentra si es necesario. Estos métodos están separados para permitir una optimización al añadir varios documentos a la vez.
   +  `get_relevance(self, query: Any, doc: DOCID) -> float` y `get_relevances(self, query: Any) -> List[Tuple[DOCID, float]]` separados por las mismas razones de la pareja anterior ambos métodos tienen como función calcular la relevancia de los documentos a una consulta.
-+ De `indexer` solo es necesario implementar el método `index(self, doc: RawDocumentData) -> INDEX` el cual extrae una lista de palabras en el orden de aparición de un objeto `enginecore.RawDocumentData`.
++ De `indexer` solo es necesario implementar el método `index(self, doc: RawDocumentData) -> INDEX` el cual extrae una lista de palabras en el orden de aparición de un objeto `engine.core.RawDocumentData`.
 ## Evaluación y Análisis
 
 El *dataset* principal usado para evaluar la aplicación fue *Cranfield* y las consultas de prueba de este. Estas consultas son en lenguaje natural, lo que implica que, por ejemplo, no pueden tomar ventaja de consultas en formato de expresión booleana para el modelo del mismo nombre.
