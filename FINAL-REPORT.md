@@ -55,8 +55,18 @@ Integrantes:
 
 ### Modelo de Semántica Latente
 
-+ Interpretación de la query (decir que es igual a la del vectorial)
-+ Cálculo de relevancia
++ El procesamiento de la query se hace de la misma forma que en el modelo vectorial
++ El modelo de semantica latente tiene como base una matriz $\Alpha$ de terminos $W_{i,j}$ donde $W_{i,j}$ es la cantidad de veces que aparece el termino $i$ en el documento $j$ y  se basa en la reduccion de la dimension del espacio vectorial que contiene a los vectores de consultas y documentos.
++ Luego se descompone la matriz $\Alpha = U \cdot S \cdot V^{T}$ usando el algoritmo SVD y se truncan las matrices $U$ y $V$ dejando solo k columnas (k es un numero arbitrario que segun nuestras investigaciones suele situarse alrededor de 100).
++ Luego se procede a recalcular los vectores de documentos y la query ajustandolos a la nueva dimension del espacio (k).
++ Se procede al calcular la similitud entre la query y los documentos modificados y se ordena en ranking de los resultados de calcular la similitud. 
+
+  $sim(q_{k},d_{ki})=\frac{ q_{k} \cdot d_{ki} }{ |q_{k}| |d_{ki}| }$ 
+
+**NOTA**:
+
+El modelo de semantica latente al reducir la dimension del espacion analiza conceptos que pueden estar "latentes", relacionar sinonimos o palabras que se usan en el mismo contexto como por ejemplo "wing" con "aeronautic". 
+
 
 ## Características Adicionales
 
