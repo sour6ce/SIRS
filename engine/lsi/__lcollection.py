@@ -7,41 +7,40 @@ import pandas as pd
 
 from debug import profile
 from ..core import DOCID, INDEX, IRS, IRCollection
-from .__lindex import LsiIndex
+from ..vector import VectorIRCollection
 
 
-class LsiIRCollection(IRCollection):
-    index: LsiIndex = LsiIndex(name="freq")
+class LsiIRCollection(VectorIRCollection):
 
-    def __get_index(self, doc: DOCID) -> INDEX:
-        irs: IRS = self.irs
-        rd = irs.data_getter(doc)
-        ind = irs.indexer(rd)
-        return ind
+    Amat: List[List[float]] = []
+    u:  List[List[float]] = []
+    v:  List[List[float]] = []
+    s:  List[float] = []
 
     def add_document(self, document: DOCID) -> None:
-        self.index.add_document(document, self.__get_index(document))
-        self.index.update_cache()
+        super().add_document(document)
+        self.loadBlockValues()
 
     def add_documents(self, documents: Iterable[DOCID]) -> None:
-        for doc in documents:
-            self.index.add_document(doc, self.__get_index(doc))
-        self.index.update_cache()
-    
-    def get_documents(self) -> List[DOCID]:
-        return list(self.index.docs)
+        super().add_documents(documents)
+        self.loadBlockValues()
     
     def get_relevance(self, query: Dict[str, int],
                       doc: DOCID) -> float:
-        pass
+        if len(query) == 0:
+            return .0
+        return dict(self.get_relevances(query)).get(doc, 0)
         
-    def get_relevances(self,query: Dict[str,int]) -> List[Tuple[DOCID, float]]:
+    def get_relevances(self, query: Dict[str, int]) -> List[Tuple
+                                                            [DOCID, float]]:
+        if len(query) == 0:
+            return .0
         k=100
         dbt = self.index.doc_by_term.keys()
         docs = self.index.docs
-        u = self.index.u
-        s = self.index.s
-        v = self.index.v
+        u = self.u
+        s = self.s
+        v = self.v
         uk = u[:,:k]
         vk = v[:,:k]
         skinv = np.linalg.inv(np.diag(s[:k]))
@@ -71,3 +70,15 @@ class LsiIRCollection(IRCollection):
         normd = sqrt(normd)
         normq = sqrt(normq)
         return mult/(normd*normq)
+
+    def loadBlockValues(self):
+        dbt = self.index.doc_by_term.keys()
+        docs = self.index.docs
+        self.Amat = [
+            [(self.index.whole[doc, term]
+              if term in self.index.term_by_doc[doc].keys() else 0)
+             for doc in docs] for term in dbt]
+        u, s, vh = np.linalg.svd(self.Amat, full_matrices=False)
+        self.u = u
+        self.s = s
+        self.v = np.transpose(vh)

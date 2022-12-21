@@ -22,6 +22,8 @@ Integrantes:
     - [RESTful API](#restful-api)
     - [Interfaz Web](#interfaz-web)
     - [Arquitectura dirigida a la extensibilidad](#arquitectura-dirigida-a-la-extensibilidad)
+      - [¿Cómo se define el *dataset* usado por sistema?](#cómo-se-define-el-dataset-usado-por-sistema)
+      - [¿Cómo incorporar un nuevo modelo al sistema?](#cómo-incorporar-un-nuevo-modelo-al-sistema)
   - [Evaluación y Análisis](#evaluación-y-análisis)
   - [Proyección de desarrollo](#proyección-de-desarrollo)
   - [Conclusiones](#conclusiones)
@@ -121,14 +123,14 @@ Además de un link a la página inicio, en la barra de navegación del sitio hay
 
 Esta aplicación está pensada para implementar varios modelos sobre un único `dataset`. De esta forma se asegura un sistema semi-portable en el que se pueden incluir múltiples modelos y adaptarlo en pocas líneas a cualquier *dataset* sobre el que se quiera utilizar.
 
-¿Cómo se define el *dataset* usado por sistema?
+#### ¿Cómo se define el *dataset* usado por sistema?
 
-En el archivo `config.py` junto a otras configuraciones se encuentra la configuración del *dataset* en el que se encuentra actualmente lo siguiente:
+En el archivo `main.py` junto a otras configuraciones se encuentra la configuración del *dataset* en el que se encuentra actualmente lo siguiente:
 ```py
 DATASET = {
-  'name': 'Cranfield'
-  'slug': 'cranfield'
-  'getter': CranfieldGetter
+  'name': 'Cranfield',
+  'slug': 'cranfield',
+  'getter': CranfieldGetter,
   'qrels': CranfieldQrelsGetter
 }
 ```
@@ -153,18 +155,18 @@ class Qrel(NamedTuple):
 
 Como puede notarse lo que la aplicación considera "*dataset*" es básicamente una abstracción que da acceso a documentos, por tanto si se desean usar varios *datasets* estos pueden adaptarse para que el sistema los reconozca como uno.
 
-¿Cómo incorporar un nuevo modelo al sistema?
+#### ¿Cómo incorporar un nuevo modelo al sistema?
 
-Para modificar los modelos del sistema es necesario ir al archivo `config.py` y cambiar la lista de modelos presente en este, en la cual debe encontrarse lo siguiente:
+Para modificar los modelos del sistema es necesario ir al archivo `main.py` y cambiar la lista de modelos presente en este, en la cual debe encontrarse lo siguiente:
 
 ```py
 MODELS=[
   Model(
     name='Boolean Model',
     slug='boolean_model',
-    type=BooleanIRS
-    dec="..."
-    instructions="..."
+    type=BooleanIRS,
+    dec="...",
+    instructions=["Enter a query in the search bar",...]
   ),
   ...
 ]

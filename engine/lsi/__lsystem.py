@@ -1,12 +1,11 @@
 from ..core import IRS
 from .__lcollection import LsiIRCollection
-from .__lquerifier import LsiIRQuerifier
+from ..vector import VectorIRS
 
 
-class LatentSemanticIRS(IRS):
+class LatentSemanticIRS(VectorIRS):
     RELEVANCE_FILTER: float = .5
 
     def __init__(self) -> None:
         super().__init__()
-        self.querifier = LsiIRQuerifier()
         self.collection = LsiIRCollection()
