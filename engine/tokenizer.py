@@ -14,6 +14,8 @@ def clean_text(text: str) -> str:
 
 def tokenize(text: str) -> Iterable[str]:
     clean = clean_text(text).lower()
-    r = (word for word in (r.group()
-         for r in tokens.finditer(clean)) if word not in STOPWORDS)
+    r = (
+        word.replace("'", '')
+        for word in (r.group() for r in tokens.finditer(clean))
+        if word not in STOPWORDS and word.replace("'", '') not in STOPWORDS)
     return r
