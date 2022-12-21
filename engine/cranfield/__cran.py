@@ -19,7 +19,7 @@ def get_cran_text(c_doc: CranfieldDoc) -> str:
     '''
     # In this case besides the text (that includes the title) we're adding
     # the authors and the extra data from bibliography
-    return c_doc.text+'\n\n'+c_doc.author+'\n\n'+c_doc.bib
+    return c_doc.text.replace('\\n', ' ')+'\n\n'+c_doc.author+'\n\n'+c_doc.bib
 
 
 def to_rawdocument(c_doc: CranfieldDoc) -> RawDocumentData:
@@ -29,7 +29,7 @@ def to_rawdocument(c_doc: CranfieldDoc) -> RawDocumentData:
     '''
     return RawDocumentData(
         doc_id=c_doc.doc_id,
-        title=c_doc.title,
+        title=c_doc.title.replace('\\n', ' '),
         text=get_cran_text(c_doc)
     )
 
@@ -44,7 +44,7 @@ class CranfieldGetter(RawDataGetter):
 
 class CranfieldQrelsGetter(QrelGetter):
     def __init__(self) -> None:
-        self.__class__.queries = {str(k+1): q.text
+        self.__class__.queries = {str(k+1): q.text.replace('\\n', ' ')
                                   for k, q in enumerate(dataset.queries_iter())}
 
     @classmethod
